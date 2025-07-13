@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.dispatchEvent(new Event('scroll'));
   }
   
-  // DOM Elements
+  // DOM Elements - using optional chaining to prevent errors when elements don't exist
   const loadingScreen = document.querySelector('#loading-screen');
   const hero = document.querySelector('.hero');
   const changingWord = document.querySelector('#changing-word');
@@ -64,6 +64,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const ctaButton = document.querySelector('#cta-button');
   const scrollIndicator = document.querySelector('.scroll-indicator');
   const particlesContainer = document.querySelector('.particles-container');
+  
+  // Log which elements were not found to help with debugging
+  const elementsToCheck = {
+    loadingScreen, hero, changingWord, wordCarousel, tagline, ctaButton, scrollIndicator, particlesContainer
+  };
+  
+  // Only log in development, not in production
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    Object.entries(elementsToCheck).forEach(([name, element]) => {
+      if (!element) console.log(`Element not found: ${name}`);
+    });
+  }
   
   // DISABLED: Word cycling is now handled by word-cycle.js
   // const roles = ['Shan Irshad', 'A Developer', 'A Designer', 'A Cloud Dev', 'A Builder'];
@@ -119,13 +131,17 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Loading sequence function (DISABLED)
   function initializeLoadingSequence() {
-    // Hide hero section initially
-    hero.style.opacity = '0';
-    tagline.style.opacity = '0';
-    tagline.style.transform = 'translateY(20px)';
-    ctaButton.style.opacity = '0';
-    ctaButton.style.transform = 'translateY(20px)';
-    scrollIndicator.style.opacity = '0';
+    // Hide hero section initially - with null checks
+    if (hero) hero.style.opacity = '0';
+    if (tagline) {
+      tagline.style.opacity = '0';
+      tagline.style.transform = 'translateY(20px)';
+    }
+    if (ctaButton) {
+      ctaButton.style.opacity = '0';
+      ctaButton.style.transform = 'translateY(20px)';
+    }
+    if (scrollIndicator) scrollIndicator.style.opacity = '0';
     
     // Start the loading screen animation
     // animateLoadingScreen(); // DISABLED
@@ -176,7 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
     createShimmerOnMove(e);
   });
 
-  setupSmoothScroll();
+  // Only call setupSmoothScroll if we're on a page that needs it
+  // This helps prevent errors on pages without the relevant elements
+  if (document.querySelector('#about') || document.querySelector('section:nth-of-type(2)')) {
+    setupSmoothScroll();
+  }
   
   // Adjust font size based on viewport width
   adjustFontSize();
@@ -293,6 +313,9 @@ function cycleWords() {
   
   // Create shimmer effect on mouse move
   function createShimmerOnMove(e) {
+    // Check if particles container exists
+    if (!particlesContainer) return;
+    
     // Limit the frequency of shimmer creation
     if (Math.random() > 0.1) return;
     
@@ -334,27 +357,31 @@ function cycleWords() {
   // Setup smooth scroll behavior
   function setupSmoothScroll() {
     // For the CTA button and scroll indicator
-    ctaButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      
-      // Scroll to next section or about section
-      const aboutSection = document.querySelector('#about') || document.querySelector('section:nth-of-type(2)');
-      if (aboutSection) {
-        aboutSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    });
+    if (ctaButton) {
+      ctaButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Scroll to next section or about section
+        const aboutSection = document.querySelector('#about') || document.querySelector('section:nth-of-type(2)');
+        if (aboutSection) {
+          aboutSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    }
     
-    scrollIndicator.addEventListener('click', () => {
-      const nextSection = document.querySelector('section:nth-of-type(2)');
-      if (nextSection) {
-        nextSection.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        window.scrollBy({ 
-          top: window.innerHeight, 
-          behavior: 'smooth' 
-        });
-      }
-    });
+    if (scrollIndicator) {
+      scrollIndicator.addEventListener('click', () => {
+        const nextSection = document.querySelector('section:nth-of-type(2)');
+        if (nextSection) {
+          nextSection.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          window.scrollBy({ 
+            top: window.innerHeight, 
+            behavior: 'smooth' 
+          });
+        }
+      });
+    }
   }
   
   // Mouse movement shimmer effect is already set up above
