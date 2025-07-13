@@ -192,6 +192,13 @@ body {
   padding-bottom: 5rem; /* Make room for scroll indicator */
 }
 
+.word-carousel-container {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  min-height: 70px; /* Ensure enough height for all text variations */
+}
+
 .intro-sequence {
   display: flex;
   flex-direction: column;
@@ -244,6 +251,14 @@ body {
 .letter:hover {
   color: var(--text-primary);
   transition: all 0.2s ease;
+}
+
+#changing-word {
+  display: inline-block;
+  opacity: 1;
+  font-weight: 700;
+  width: 100%; /* Ensure full width */
+  min-width: 200px; /* Minimum width to prevent text wrapping */
 }
 
 .tagline-text {
@@ -496,5 +511,51 @@ body {
   
   .cta-button {
     padding: 0.7rem 1.5rem;
+  }
+  
+  /* Fix for mobile word carousel */
+  .word-carousel-container {
+    min-height: 80px; /* Increased height to prevent text cutoff */
+    margin-bottom: 15px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .word-carousel {
+    width: 100%;
+    text-align: center;
+  }
+  
+  #changing-word {
+    font-size: 2.2rem; /* Slightly smaller font on mobile */
+    line-height: 1.4;
+    padding-bottom: 15px;
+    display: inline-block;
+    width: auto;
+    min-width: 80%;
+  }
+  
+  .content {
+    padding: 0 15px; /* Add horizontal padding */
+    height: auto; /* Allow content to determine height */
+    padding-top: 60px; /* Add space at the top */
+    padding-bottom: 80px; /* Add space at the bottom */
+  }
+  
+  .hero {
+    height: 100vh; /* Ensure full viewport height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+  }
+  
+  .intro-sequence {
+    margin-bottom: 1.5rem;
+  }
+  
+  .greeting-line {
+    margin-bottom: 10px;
   }
 }
