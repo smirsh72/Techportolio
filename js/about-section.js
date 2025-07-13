@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Use the appropriate backend URL based on environment
       const healthCheckURL = isLocalhost
-        ? 'http://localhost:10000/health'
+        ? window.location.protocol + '//localhost:10000/health'
         : 'https://portf-ti65.onrender.com/health';
       
       const response = await fetch(healthCheckURL, { method: 'GET' });
@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Try multiple backend URLs in order
         const backendURLs = isLocalhost 
-          ? ['http://localhost:10000/api/chat']
+          ? [window.location.protocol + '//localhost:10000/api/chat']
           : ['https://portf-ti65.onrender.com/api/chat'];
         
         let lastError = null;
