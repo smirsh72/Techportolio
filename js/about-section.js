@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Configuration for chat responses
   const chatConfig = {
-    useAPI: false, // Set this to true to use the API instead of hardcoded responses
+    useAPI: true, // Enable API mode by default
     backendURL: null // Will be automatically determined based on environment
   };
   
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Use the appropriate backend URL based on environment
       const healthCheckURL = isLocalhost
-        ? 'http://localhost:3000/health'
+        ? 'http://localhost:10000/health'
         : 'https://portf-ti65.onrender.com/health';
       
       const response = await fetch(healthCheckURL, { method: 'GET' });
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Use the appropriate backend URL based on environment
         if (!chatConfig.backendURL) {
           chatConfig.backendURL = isLocalhost 
-            ? 'http://localhost:3000/api/chat'  // Local development
+            ? 'http://localhost:10000/api/chat'  // Local development
             : 'https://portf-ti65.onrender.com/api/chat'; // Production URL
         }
         
