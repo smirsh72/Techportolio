@@ -4,49 +4,86 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Reveal animations on scroll with staggered delays
+  // Reveal animations on scroll with staggered delays - optimized version
   const revealElements = document.querySelectorAll('.reveal-element');
+  let ticking = false;
   
   function handleReveal() {
+    // Reset the ticking flag
+    ticking = false;
+    
+    // Use requestAnimationFrame for better performance
+    const windowHeight = window.innerHeight;
+    
+    // Process only elements that haven't been activated yet
     revealElements.forEach(element => {
+      // Skip already active elements
+      if (element.classList.contains('active')) return;
+      
       const elementTop = element.getBoundingClientRect().top;
-      const windowHeight = window.innerHeight;
-      const delay = element.dataset.delay || 0;
+      const delay = parseInt(element.dataset.delay || 0);
       
       if (elementTop < windowHeight - 100) {
-        setTimeout(() => {
+        // Pre-load elements that will be visible soon
+        if (delay > 0) {
+          setTimeout(() => {
+            element.classList.add('active');
+          }, delay);
+        } else {
           element.classList.add('active');
-        }, parseInt(delay));
+        }
       }
     });
   }
   
-  // Initial check for elements in view
+  // Throttled scroll handler using requestAnimationFrame
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(handleReveal);
+      ticking = true;
+    }
+  }
+  
+  // Initial check for elements in view with a slight delay
   setTimeout(handleReveal, 300);
   
-  // Check on scroll
-  window.addEventListener('scroll', handleReveal);
+  // Optimized scroll event listener
+  window.addEventListener('scroll', onScroll, { passive: true });
   
-  // Add data-delay attributes to child elements for staggered animations
-  document.querySelectorAll('.about-left-column .about-content > *').forEach((element, index) => {
+  // Add data-delay attributes to child elements for staggered animations - optimized
+  // Pre-compute styles and use a more efficient approach
+  const aboutContentChildren = document.querySelectorAll('.about-left-column .about-content > *');
+  
+  // Batch DOM operations
+  const fragment = document.createDocumentFragment();
+  aboutContentChildren.forEach((element, index) => {
+    // Apply styles in batches
     element.classList.add('reveal-child');
     element.style.opacity = '0';
     element.style.transform = 'translateY(20px)';
-    element.dataset.childDelay = (index + 1) * 150;
+    element.dataset.childDelay = Math.min((index + 1) * 80, 400); // Reduced delay, capped at 400ms
   });
   
-  // Function to reveal child elements with staggered delays
+  // Function to reveal child elements with staggered delays - optimized
+  let childrenRevealed = false;
   function revealChildren() {
+    // Only run once
+    if (childrenRevealed) return;
+    
     const aboutContent = document.querySelector('.about-left-column');
     if (aboutContent && aboutContent.classList.contains('active')) {
-      const children = document.querySelectorAll('.reveal-child');
-      children.forEach(child => {
-        const delay = child.dataset.childDelay || 0;
-        setTimeout(() => {
-          child.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-          child.style.opacity = '1';
-          child.style.transform = 'translateY(0)';
-        }, parseInt(delay));
+      childrenRevealed = true;
+      
+      // Use a single requestAnimationFrame to batch animations
+      requestAnimationFrame(() => {
+        const children = document.querySelectorAll('.reveal-child');
+        children.forEach(child => {
+          const delay = parseInt(child.dataset.childDelay || 0);
+          setTimeout(() => {
+            // Apply transitions in one go
+            child.style.cssText = 'opacity: 1; transform: translateY(0); transition: opacity 0.4s ease, transform 0.4s ease;';
+          }, delay);
+        });
       });
     }
   }
@@ -94,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
   - Aligned roadmap priorities around feature retention and engagement, increasing active user retention
   
   INTERESTS:
+  - Product management, especially for technical products and AI/ML applications
   - Cloud automation, AI/ML applications, DevOps, and building technical products
   - Creating intuitive interfaces for complex technical workflows
   `;
@@ -117,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Skills and interests
     skills: "My technical skills include Python, React, TypeScript, FastAPI, Docker, Terraform, AWS, CI/CD, and ML/AI integration. I have strong cloud expertise with AWS services, infrastructure as code, and DevOps practices.",
-    interests: "I'm passionate about cloud automation, AI/ML applications, DevOps, and building technical products. I enjoy creating intuitive interfaces for complex technical workflows.",
+    interests: "I'm passionate about product management, especially for technical products and AI/ML applications. I also love cloud automation, DevOps, and creating intuitive interfaces for complex technical workflows.",
     education: "I have a strong background in computer science with specialized knowledge in AI and cloud technologies from the University of Texas at Dallas.",
     
     // Default responses
@@ -241,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Configuration for chat responses
   const chatConfig = {
-    useAPI: false, // Set this to true to use the API instead of hardcoded responses
+    useAPI: true, // Enabled API mode by default
     backendURL: null // Will be automatically determined based on environment
   };
   
@@ -264,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Use the appropriate backend URL based on environment
       const healthCheckURL = isLocalhost
-        ? 'http://localhost:3000/health'
+        ? 'http://localhost:10000/health'
         : 'https://portf-ti65.onrender.com/health';
       
       const response = await fetch(healthCheckURL, { method: 'GET' });
@@ -295,27 +333,45 @@ document.addEventListener('DOMContentLoaded', function() {
         // Determine if we're in development or production
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
-        // Use the appropriate backend URL based on environment
-        if (!chatConfig.backendURL) {
-          chatConfig.backendURL = isLocalhost 
-            ? 'http://localhost:3000/api/chat'  // Local development
-            : 'https://portf-ti65.onrender.com/api/chat'; // Production URL
+        // Try multiple backend URLs in order
+        const backendURLs = isLocalhost 
+          ? ['http://localhost:10000/api/chat']
+          : ['https://portf-ti65.onrender.com/api/chat'];
+        
+        let lastError = null;
+        
+        // Try each backend URL until one works
+        for (const url of backendURLs) {
+          try {
+            console.log(`Trying backend URL: ${url}`);
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ message }),
+              // Set a timeout to avoid waiting too long
+              signal: AbortSignal.timeout(5000)
+            });
+            
+            if (!response.ok) {
+              throw new Error(`API responded with status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            // Store the successful URL for future use
+            chatConfig.backendURL = url;
+            console.log(`Successfully connected to backend at: ${url}`);
+            return data.response;
+          } catch (err) {
+            console.warn(`Failed to connect to ${url}:`, err);
+            lastError = err;
+            // Continue to the next URL
+          }
         }
         
-        const response = await fetch(chatConfig.backendURL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ message }),
-        });
-        
-        if (!response.ok) {
-          throw new Error(`API responded with status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return data.response;
+        // If we get here, all URLs failed
+        throw lastError || new Error('All backend URLs failed');
       } catch (error) {
         console.error('Error calling chat API:', error);
         // Fallback to hardcoded responses if API fails
