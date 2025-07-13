@@ -239,10 +239,92 @@ document.addEventListener('DOMContentLoaded', function() {
     return responses.default[Math.floor(Math.random() * responses.default.length)];
   }
   
+  // Configuration for chat responses
+  const chatConfig = {
+    useAPI: false, // Set this to true to use the API instead of hardcoded responses
+    backendURL: null // Will be automatically determined based on environment
+  };
+  
+  // Function to toggle between API and hardcoded responses
+  // This can be called from the console for testing: toggleChatAPI(true) or toggleChatAPI(false)
+  function toggleChatAPI(useAPI) {
+    chatConfig.useAPI = !!useAPI;
+    console.log(`Chat API mode: ${chatConfig.useAPI ? 'ENABLED' : 'DISABLED'}`);
+    return chatConfig.useAPI;
+  }
+  
+  // Make the toggle function available globally for testing
+  window.toggleChatAPI = toggleChatAPI;
+  
+  // Function to check if the backend is available
+  async function checkBackendConnection() {
+    try {
+      // Determine if we're in development or production
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      // Use the appropriate backend URL based on environment
+      const healthCheckURL = isLocalhost
+        ? 'http://localhost:3000/health'
+        : 'https://portf-ti65.onrender.com/health';
+      
+      const response = await fetch(healthCheckURL, { method: 'GET' });
+      const data = await response.json();
+      
+      if (response.ok && data.status === 'ok') {
+        console.log('✅ Backend connection successful');
+        return true;
+      } else {
+        console.warn('⚠️ Backend responded but with unexpected data:', data);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Backend connection failed:', error);
+      return false;
+    }
+  }
+  
+  // Make the check function available globally
+  window.checkBackendConnection = checkBackendConnection;
+  
   // Process user message and get response
   async function getAIResponse(message) {
-    // Use hardcoded responses instead of API call
-    return await getHardcodedResponse(message);
+    // Check if we should use API or hardcoded responses
+    
+    if (chatConfig.useAPI) {
+      try {
+        // Determine if we're in development or production
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        // Use the appropriate backend URL based on environment
+        if (!chatConfig.backendURL) {
+          chatConfig.backendURL = isLocalhost 
+            ? 'http://localhost:3000/api/chat'  // Local development
+            : 'https://portf-ti65.onrender.com/api/chat'; // Production URL
+        }
+        
+        const response = await fetch(chatConfig.backendURL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API responded with status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data.response;
+      } catch (error) {
+        console.error('Error calling chat API:', error);
+        // Fallback to hardcoded responses if API fails
+        return await getHardcodedResponse(message);
+      }
+    } else {
+      // Use hardcoded responses
+      return await getHardcodedResponse(message);
+    }
   }
   
   function randomChoice(array) {
