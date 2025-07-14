@@ -1337,12 +1337,12 @@ body {
     }
     
     #changing-word {
-        min-width: 350px;
+        min-width: 365px;
         font-size: clamp(3.5rem, 10vw, 6rem);
         font-weight: 800;
         line-height: 1.1;
         margin-top: 0.5rem;
-        padding: 0 10px;
+        padding: 0 15px;
         width: 100%;
         text-align: center;
     }
