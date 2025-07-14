@@ -1337,11 +1337,14 @@ body {
     }
     
     #changing-word {
-        min-width: 280px;
-        font-size: clamp(4rem, 10vw, 6rem);
+        min-width: 320px;
+        font-size: clamp(3.5rem, 10vw, 6rem);
         font-weight: 800;
         line-height: 1.1;
         margin-top: 0.5rem;
+        padding: 0 10px;
+        width: 100%;
+        text-align: center;
     }
     
     .login-text {
@@ -1361,7 +1364,11 @@ body {
     }
     
     .gradient-text {
-        font-size: 42px; /* Smaller on mobile but still prominent */
+        font-size: 38px; /* Smaller on mobile but still prominent */
+        width: 100%;
+        text-align: center;
+        overflow-wrap: break-word;
+        word-break: keep-all;
     }
     
     .content {
