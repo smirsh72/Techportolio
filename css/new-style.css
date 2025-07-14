@@ -1337,7 +1337,7 @@ body {
     }
     
     #changing-word {
-        min-width: 320px;
+        min-width: 350px;
         font-size: clamp(3.5rem, 10vw, 6rem);
         font-weight: 800;
         line-height: 1.1;
