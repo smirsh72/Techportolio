@@ -129,6 +129,7 @@ body {
 .site-logo {
     display: flex;
     align-items: center;
+    gap: 1rem;
     margin-left: 0;
     padding-left: 0;
 }
@@ -634,6 +635,8 @@ body {
     margin: 0 auto; /* Center on mobile */
     overflow-wrap: break-word; /* Allow text to wrap if needed */
     word-break: keep-all; /* Prevent breaking in the middle of words */
+    line-height: 1.3; /* Increased line height to prevent cutoff of descenders */
+    padding-bottom: 10px; /* Added bottom padding to ensure descenders are visible */
 }
 
 .word-carousel {
@@ -1279,7 +1282,7 @@ body {
     
     /* Improve word carousel for mobile */
     .word-carousel-container {
-        height: 140px;
+        height: 160px; /* Increased height to prevent cutoff */
         padding: 0 5px;
         width: 100%;
         display: flex;
@@ -1340,9 +1343,9 @@ body {
         min-width: 365px;
         font-size: clamp(3.5rem, 10vw, 6rem);
         font-weight: 800;
-        line-height: 1.1;
+        line-height: 1.3; /* Increased line height to prevent cutoff */
         margin-top: 0.5rem;
-        padding: 0 15px;
+        padding: 0 15px 10px; /* Added bottom padding to prevent cutoff */
         width: 100%;
         text-align: center;
     }
@@ -1627,16 +1630,30 @@ body {
     transition: color 0.5s ease, text-shadow 0.5s ease;
 }
 
+.experience-description-list {
+    margin: 1rem 0 0;
+    padding-left: 1.25rem;
+}
+
 .experience-description-list li {
     margin-bottom: 0.75rem;
-    line-height: 1.625;
-    position: relative;
-    transition: color 0.5s ease, text-shadow 0.5s ease;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.experience-paragraph {
+    margin: 1rem 0 0.75rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    text-align: left;
 }
 
 [data-theme="dark"] .experience-description-list,
-[data-theme="dark"] .experience-description-list li {
-    color: #e2e8f0;
+[data-theme="dark"] .experience-description-list li,
+[data-theme="dark"] .experience-paragraph {
+    color: var(--dark-text-secondary);
     text-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
@@ -2140,9 +2157,7 @@ body {
 
 /* Theme Toggle Button */
 .theme-toggle {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
+    position: relative;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -2152,61 +2167,20 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 10;
+    z-index: 100;
+    transition: all 0.3s ease;
     overflow: hidden;
-    transition: all 0.3s ease;
+    margin-left: 1rem;
 }
 
-/* Navbar Theme Toggle Button */
-.navbar-theme-toggle {
-    position: static;
-    top: auto;
-    right: auto;
-    width: auto;
-    height: auto;
-    border-radius: 0.75rem;
-    background: transparent;
-    border: none;
-    padding: 0.5rem 1rem;
-    margin-left: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-satoshi), sans-serif;
-    font-size: 1rem;
-    font-weight: 500;
-    color: #374151;
-    letter-spacing: -0.01em;
-    transition: all 0.3s ease;
-}
+/* Navbar Theme Toggle Button - Not used anymore */
 
-.navbar-theme-toggle:hover {
-    color: #ec4899;
-    transform: none;
-    border-color: transparent;
-    box-shadow: none;
-}
-
-.navbar-theme-toggle:hover::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0.5rem;
-    right: 0.5rem;
-    height: 2px;
-    background: linear-gradient(90deg, #a855f7 0%, #f97316 100%);
-    border-radius: 2px;
-    opacity: 0.6;
-}
-
-.navbar-theme-toggle i {
-    font-size: 1rem;
-}
+/* Navbar theme toggle styles removed - not used anymore */
 
 .theme-toggle:hover {
     transform: scale(1.1);
-    border-color: var(--color-purple);
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+    border-color: #ec4899;
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
 }
 
 .theme-toggle-animation {
@@ -2234,12 +2208,10 @@ body {
 }
 
 .theme-toggle:hover i {
-    color: var(--color-purple);
-}
-
-.navbar-theme-toggle:hover i {
     color: #ec4899;
 }
+
+/* Removed navbar-theme-toggle hover style */
 
 .theme-toggle .sun-icon,
 .theme-toggle .moon-icon {
@@ -2262,6 +2234,8 @@ body {
 [data-theme="dark"] .theme-toggle .sun-icon {
     opacity: 1;
     transform: translateY(0);
+    color: #ec4899;
+    text-shadow: 0 0 5px rgba(236, 72, 153, 0.6);
 }
 
 [data-theme="dark"] .theme-toggle .moon-icon {
@@ -2294,6 +2268,14 @@ body {
 }
 
 @media (max-width: 768px) {
+    .navbar-container {
+        padding: 0 1rem;
+    }
+    
+    .site-logo {
+        gap: 0.5rem;
+    }
+    
     .about-section {
         padding: 6rem 5% 6rem;
     }

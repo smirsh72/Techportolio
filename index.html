@@ -45,6 +45,8 @@
     <meta name="theme-color" content="#000000">
     <meta name="theme-color" content="#000000">
     <link rel="stylesheet" href="css/new-style.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/certifications.css">
     <link rel="stylesheet" href="css/bullet-list.css">
     <!-- Google Fonts - Scale AI inspired theme -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,7 +54,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap" rel="stylesheet">
     <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" integrity="sha512-fD9DI5bZwQxOi7MhYWnnNPlvXdp/2Pj3XSTRrFs5FQa4mizyGLnJcN6tuvUS6LbmgN1ut+XGSABKvjN0H6Aoow==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -82,15 +85,16 @@
         <div class="navbar-container">
             <div class="site-logo">
                 <a href="#hero" class="site-name">shanirshad.com</a>
-            </div>
-            <div class="navbar-links">
-                <a href="#about" class="navbar-link">About Me</a>
-                <a href="#experience" class="navbar-link active">Experience</a>
-                <a href="ghosted.html" class="navbar-link" onclick="window.location.href='ghosted.html'; return false;">Ghosted</a>
-                <button id="theme-toggle" class="theme-toggle navbar-theme-toggle" aria-label="Toggle dark mode">
+                <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
                     <i class="fas fa-moon moon-icon"></i>
                     <i class="fas fa-sun sun-icon"></i>
                 </button>
+            </div>
+            <div class="navbar-links">
+                <a href="#about" class="navbar-link">About Me</a>
+                <a href="#experience" class="navbar-link">Experience</a>
+                <a href="#certifications" class="navbar-link">Certifications</a>
+                <a href="ghosted.html" class="navbar-link" onclick="window.location.href='ghosted.html'; return false;">Ghosted</a>
             </div>
         </div>
     </nav>
@@ -140,10 +144,13 @@
                             <div class="about-content">
                                 <div class="about-text">
                                     <p class="intro-paragraph">
-                                        I'm <span class="gradient-text highlight-text">Shan Irshad</span> — a technical builder and system architect focused on crafting AI-native, cloud-powered solutions that solve complex engineering problems through scalable design, robust implementation, and strategic technical decisions.
+                                        Hi, I'm <span class="gradient-text highlight-text">Shan Irshad</span> — a technical builder and system architect focused on crafting AI-native, cloud-powered solutions that solve complex engineering problems through scalable design, robust implementation, and strategic technical decisions.
                                     </p>
                                     <p class="secondary-paragraph">
-                                        As a <span class="gradient-text highlight-text">Cloud Architect</span>, <span class="gradient-text highlight-text">AI Engineer</span>, and <span class="gradient-text highlight-text">Technical Product Manager</span>, I blend deep engineering expertise with product intuition to transform complex systems into powerful, scalable platforms.
+                                        As a <span class="gradient-text highlight-text">Cloud Architect</span>, <span class="gradient-text highlight-text">AI Engineer</span>, and <span class="gradient-text highlight-text">Technical Product Manager</span>, I blend deep engineering expertise with product intuition to transform complex systems into powerful, scalable platforms. My flagship project, Ghosted, showcases this approach as a cloud automation platform that uses natural language and turns it into cloud deployments.
+                                    </p>
+                                    <p class="secondary-paragraph">
+                                        When I'm not architecting systems, you'll find me cheering on Liverpool FC and staying active working out.
                                     </p>
                                 </div>
                                 
@@ -221,13 +228,9 @@
                                         <p class="experience-company">@ Mastercard</p>
                                         <p class="experience-date">Summer 2025</p>
                                     </div>
-                                    <ul class="experience-description-list">
-                                        <li>Developed AI-powered incident management tool using Python and LLMs to automate data ingestion from Splunk and Remedy APIs, reducing mean time to triage by 40% and improving incident response workflows across the SRE team.</li>
-                                        <li>Engineered machine learning detection algorithms to analyze 100k+ log events from Splunk, implementing automated root cause analysis with custom alert tagging that increased anomaly detection accuracy by 25%.</li>
-                                        <li>Built comprehensive Splunk dashboards with integrated ML-based anomaly detection for real-time file transfer monitoring, improving reporting accuracy by 15% and enabling proactive system maintenance.</li>
-                                        <li>Automated cloud infrastructure provisioning using Terraform IaC templates for EC2 instances and S3 bucket management, accelerating deployment cycles by 40% and standardizing resource configuration across environments.</li>
-                                        <li>Designed Jenkins CI/CD pipeline templates for automated deployment of cloud resources, enabling seamless microservice testing and deployment for critical file transfer applications.</li>
-                                    </ul>
+                                    <p class="experience-paragraph">
+                                        During my internship at Mastercard, I developed an AI-powered incident management tool using Python and LLMs that automated data ingestion from Splunk and Remedy APIs, reducing mean time to triage by 40%. I also engineered ML detection algorithms to analyze over 100,000 log events, which improved anomaly detection accuracy by 25% while automating cloud infrastructure provisioning using Terraform and Jenkins CI/CD pipelines to accelerate deployment cycles by 40%.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -246,14 +249,53 @@
                                         <p class="experience-company">@ Nutrify AI</p>
                                         <p class="experience-date">Spring 2025</p>
                                     </div>
-                                    <ul class="experience-description-list">
-                                        <li>Led technical architecture and implementation of AI-powered nutrition app with ML recommendation engine, defining system requirements and API specifications for backend services.</li>
-                                        <li>Built and deployed conversational AI chatbot using FastAPI and OpenAI API integration, conducting user validation through 15 interviews and 100+ surveys, resulting in 25% increase in app downloads.</li>
-                                        <li>Drove implementation of ML personalization features, collaborating with data science teams on recommendation algorithm optimization to improve user activity by 30%.</li>
-                                        <li>Optimized chatbot performance through API response handling and conversation flow logic, achieving 45% improvement in user engagement metrics.</li>
-                                        <li>Developed analytics tracking using SQL queries and API endpoints to measure chatbot performance and feature adoption, building dashboards for continuous product improvement.</li>
-                                    </ul>
+                                    <p class="experience-paragraph">
+                                        At Nutrify AI, I led the technical architecture for an AI-powered nutrition app with an ML recommendation engine, building and deploying a conversational AI chatbot using FastAPI and OpenAI API integration. Through user validation with 15 interviews and 100+ surveys, the chatbot resulted in a 25% increase in app downloads. I optimized performance and implemented ML personalization features that improved user engagement by 45% and overall user activity by 30%.
+                                    </p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Certifications Section -->
+            <section id="certifications" class="modern-section certifications-section">
+                <div class="container">
+                    <h2 class="section-subtitle text-center">Certifications</h2>
+                    
+                    <div class="certifications-container">
+                        <!-- Azure Administrator Certification -->
+                        <div class="certification-card reveal-element" data-delay="100">
+                            <div class="certification-badge-container">
+                                <img src="https://learn.microsoft.com/en-us/media/learn/certification/badges/microsoft-certified-associate-badge.svg" alt="Microsoft Azure Administrator Associate" class="certification-badge">
+                                <div class="certification-hover-info">
+                                    <h4>Azure Administrator</h4>
+                                    <p>Managing Azure resources & infrastructure</p>
+                                    <span class="certification-date">February 2025</span>
+                                </div>
+                            </div>
+                            <div class="certification-details">
+                                <h3 class="certification-title">Microsoft <span class="gradient-role">Azure Administrator</span></h3>
+                                <p class="certification-description">Certified in implementing, managing, and monitoring identity, governance, storage, compute, and virtual networks in a cloud environment.</p>
+                                <a href="https://learn.microsoft.com/en-us/users/irshadshanmikael-1967/credentials/5f29ed6b13d6e248" target="_blank" class="certification-link"><i class="fas fa-external-link-alt"></i> View Certification</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Azure Fundamentals Certification -->
+                        <div class="certification-card reveal-element" data-delay="200">
+                            <div class="certification-badge-container">
+                                <img src="https://learn.microsoft.com/en-us/media/learn/certification/badges/microsoft-certified-fundamentals-badge.svg" alt="Microsoft Azure Fundamentals" class="certification-badge">
+                                <div class="certification-hover-info">
+                                    <h4>Azure Fundamentals</h4>
+                                    <p>Cloud concepts & Azure basics</p>
+                                    <span class="certification-date">July 2024</span>
+                                </div>
+                            </div>
+                            <div class="certification-details">
+                                <h3 class="certification-title">Microsoft <span class="gradient-role">Azure Fundamentals</span></h3>
+                                <p class="certification-description">Certified in cloud concepts, Azure services, Azure workloads, security and privacy in Azure, and Azure pricing and support.</p>
+                                <a href="https://learn.microsoft.com/en-us/users/irshadshanmikael-1967/credentials/492a6cf91ff5ff73" target="_blank" class="certification-link"><i class="fas fa-external-link-alt"></i> View Certification</a>
                             </div>
                         </div>
                     </div>
