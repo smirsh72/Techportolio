@@ -23,48 +23,78 @@ document.addEventListener('DOMContentLoaded', function() {
       const elementTop = element.getBoundingClientRect().top;
       const delay = parseInt(element.dataset.delay || 0);
       
-      if (elementTop < windowHeight - 100) {
-        // Pre-load elements that will be visible soon
+      // Check if element is in viewport with a larger buffer for desktop
+      // This helps with smoother animations by preloading earlier
+      if (elementTop < windowHeight - 150) {
+        // Use a more efficient animation approach
         if (delay > 0) {
-          setTimeout(() => {
-            element.classList.add('active');
-          }, delay);
+          // Use requestAnimationFrame instead of setTimeout for better performance
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              element.classList.add('active');
+            }, delay);
+          });
         } else {
-          element.classList.add('active');
+          requestAnimationFrame(() => {
+            element.classList.add('active');
+          });
         }
       }
     });
   }
   
-  // Throttled scroll handler using requestAnimationFrame
+  // Improved throttled scroll handler with debounce for better performance
+  let scrollTimeout;
   function onScroll() {
+    // Clear previous timeout to implement debounce
+    clearTimeout(scrollTimeout);
+    
     if (!ticking) {
+      // Use requestAnimationFrame for smoother animations
       requestAnimationFrame(handleReveal);
       ticking = true;
+      
+      // Add a small debounce to prevent excessive calculations
+      scrollTimeout = setTimeout(() => {
+        ticking = false;
+      }, 50); // 50ms debounce helps reduce CPU usage
     }
   }
   
-  // Initial check for elements in view with a slight delay
-  setTimeout(handleReveal, 300);
+  // Initial check for elements in view with a shorter delay for better performance
+  setTimeout(handleReveal, 100);
   
-  // Optimized scroll event listener
-  window.addEventListener('scroll', onScroll, { passive: true });
+  // Optimized scroll event listener with passive flag and capture option for better performance
+  window.addEventListener('scroll', onScroll, { passive: true, capture: false });
   
-  // Add data-delay attributes to child elements for staggered animations - optimized
-  // Pre-compute styles and use a more efficient approach
+  // Add resize listener to handle viewport changes
+  window.addEventListener('resize', () => {
+    // Clear any existing timeout
+    clearTimeout(scrollTimeout);
+    // Reset ticking flag
+    ticking = false;
+    // Trigger reveal check after resize
+    requestAnimationFrame(handleReveal);
+  }, { passive: true });
+  
+  // Optimized approach for child element animations
+  // Using the same efficient approach that works well on mobile
   const aboutContentChildren = document.querySelectorAll('.about-left-column .about-content > *');
   
-  // Batch DOM operations
-  const fragment = document.createDocumentFragment();
-  aboutContentChildren.forEach((element, index) => {
-    // Apply styles in batches
-    element.classList.add('reveal-child');
-    element.style.opacity = '0';
-    element.style.transform = 'translateY(20px)';
-    element.dataset.childDelay = Math.min((index + 1) * 80, 400); // Reduced delay, capped at 400ms
+  // Use requestAnimationFrame to batch style changes for better performance
+  requestAnimationFrame(() => {
+    // Apply all styles at once to minimize reflows
+    aboutContentChildren.forEach((element, index) => {
+      element.classList.add('reveal-child');
+      // Use hardware-accelerated properties
+      element.style.cssText = 'opacity: 0; transform: translateY(20px); will-change: opacity, transform;';
+      // Use shorter delays on desktop for better perceived performance
+      element.dataset.childDelay = Math.min((index + 1) * 60, 300); // Even shorter delays, capped at 300ms
+    });
   });
   
-  // Function to reveal child elements with staggered delays - optimized
+  // Optimized function to reveal child elements with staggered delays
+  // Using the same efficient approach that works well on mobile
   let childrenRevealed = false;
   function revealChildren() {
     // Only run once
@@ -75,15 +105,35 @@ document.addEventListener('DOMContentLoaded', function() {
       childrenRevealed = true;
       
       // Use a single requestAnimationFrame to batch animations
+      // This reduces layout thrashing and improves performance
       requestAnimationFrame(() => {
-        const children = document.querySelectorAll('.reveal-child');
-        children.forEach(child => {
-          const delay = parseInt(child.dataset.childDelay || 0);
-          setTimeout(() => {
-            // Apply transitions in one go
-            child.style.cssText = 'opacity: 1; transform: translateY(0); transition: opacity 0.4s ease, transform 0.4s ease;';
-          }, delay);
-        });
+        // Pre-calculate all children to avoid reflows during animation
+        const children = Array.from(document.querySelectorAll('.reveal-child'));
+        
+        // Process in batches to improve performance
+        const processBatch = (startIndex, batchSize) => {
+          const endIndex = Math.min(startIndex + batchSize, children.length);
+          
+          for (let i = startIndex; i < endIndex; i++) {
+            const child = children[i];
+            const delay = parseInt(child.dataset.childDelay || 0);
+            
+            // Use hardware-accelerated properties for better performance
+            setTimeout(() => {
+              child.style.cssText = 'opacity: 1; transform: translateY(0); transition: opacity 0.4s ease, transform 0.4s ease; will-change: opacity, transform;';
+            }, delay);
+          }
+          
+          // Process next batch if needed
+          if (endIndex < children.length) {
+            setTimeout(() => {
+              processBatch(endIndex, batchSize);
+            }, 16); // ~1 frame at 60fps
+          }
+        };
+        
+        // Start processing in batches of 5 elements
+        processBatch(0, 5);
       });
     }
   }
