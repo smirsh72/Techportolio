@@ -383,8 +383,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 800);
   }
   
-  // Initialize chat with welcome message
-  addWelcomeMessage();
+  // Delay chat initialization to prevent competing with about section animations
+  setTimeout(() => {
+    // Initialize chat with welcome message
+    addWelcomeMessage();
+  }, 3000); // 3 second delay - increased for better separation from animations
   
   // Check if the user message matches any hardcoded response keywords
   function matchHardcodedResponse(message) {
