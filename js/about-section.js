@@ -1,52 +1,102 @@
 /**
  * About Section Functionality
  * Enhanced with staggered animations and improved AI chat interface
+ * Optimized for consistent performance across local and production environments
+ * Version: 2.0.1
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Force layout recalculation to prevent initial lag
+  document.body.offsetHeight;
+  
+  // Use a performance flag to detect if we need to use low-power mode
+  const useLowPowerMode = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  
   // Reveal animations on scroll with staggered delays - optimized version
   const revealElements = document.querySelectorAll('.reveal-element');
   let ticking = false;
+  let lastScrollY = window.scrollY;
   
   function handleReveal() {
     // Reset the ticking flag
     ticking = false;
     
+    // Cache current scroll position to minimize layout thrashing
+    const currentScrollY = window.scrollY;
+    const scrollDelta = Math.abs(currentScrollY - lastScrollY);
+    lastScrollY = currentScrollY;
+    
+    // Skip processing if scroll delta is too large (fast scrolling)
+    // This prevents excessive calculations during rapid scrolling
+    if (scrollDelta > 100) {
+      requestAnimationFrame(handleReveal);
+      return;
+    }
+    
     // Use requestAnimationFrame for better performance
     const windowHeight = window.innerHeight;
     
-    // Process only elements that haven't been activated yet
+    // Create a list of elements to process to avoid layout thrashing
+    const elementsToActivate = [];
+    
+    // First pass: gather all elements that need to be activated
+    // This prevents multiple forced layouts during the loop
     revealElements.forEach(element => {
       // Skip already active elements
       if (element.classList.contains('active')) return;
       
       const elementTop = element.getBoundingClientRect().top;
-      const delay = parseInt(element.dataset.delay || 0);
+      const delay = useLowPowerMode ? 0 : parseInt(element.dataset.delay || 0);
       
-      // Check if element is in viewport with a larger buffer for desktop
-      // This helps with smoother animations by preloading earlier
-      if (elementTop < windowHeight - 150) {
-        // Use a more efficient animation approach
-        if (delay > 0) {
-          // Use requestAnimationFrame instead of setTimeout for better performance
-          requestAnimationFrame(() => {
+      // Check if element is in viewport with a larger buffer
+      // The buffer is larger for desktop to preload content earlier
+      if (elementTop < windowHeight - 200) {
+        elementsToActivate.push({ element, delay });
+      }
+    });
+    
+    // Second pass: activate all elements in a single batch
+    if (elementsToActivate.length > 0) {
+      // Use a single requestAnimationFrame for all elements
+      requestAnimationFrame(() => {
+        elementsToActivate.forEach(({ element, delay }) => {
+          if (delay > 0) {
             setTimeout(() => {
               element.classList.add('active');
             }, delay);
-          });
-        } else {
-          requestAnimationFrame(() => {
+          } else {
             element.classList.add('active');
-          });
-        }
-      }
-    });
+          }
+        });
+      });
+    }
   }
   
-  // Improved throttled scroll handler with debounce for better performance
+  // Improved throttled scroll handler with adaptive throttling
   let scrollTimeout;
+  let lastScrollTime = 0;
+  const scrollThreshold = useLowPowerMode ? 150 : 100; // Higher threshold in low-power mode
+  
   function onScroll() {
-    // Clear previous timeout to implement debounce
+    // Adaptive throttling based on time since last scroll event
+    const now = performance.now();
+    if (now - lastScrollTime < scrollThreshold) {
+      // Too soon after last scroll, use debounce pattern
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        lastScrollTime = performance.now();
+        if (!ticking) {
+          requestAnimationFrame(handleReveal);
+          ticking = true;
+        }
+      }, scrollThreshold);
+      return;
+    }
+    
+    // Update last scroll time
+    lastScrollTime = now;
+    
+    // Clear previous timeout
     clearTimeout(scrollTimeout);
     
     if (!ticking) {
@@ -54,47 +104,124 @@ document.addEventListener('DOMContentLoaded', function() {
       requestAnimationFrame(handleReveal);
       ticking = true;
       
-      // Add a small debounce to prevent excessive calculations
+      // Reset ticking after a delay
       scrollTimeout = setTimeout(() => {
         ticking = false;
-      }, 50); // 50ms debounce helps reduce CPU usage
+      }, 50);
     }
   }
   
-  // Initial check for elements in view with a shorter delay for better performance
-  setTimeout(handleReveal, 100);
+  // Initial check for elements in view with adaptive timing
+  // Use a shorter delay on fast connections, longer on slow connections
+  const connectionSpeed = navigator.connection ? 
+    (navigator.connection.effectiveType || 'unknown') : 'unknown';
   
-  // Optimized scroll event listener with passive flag and capture option for better performance
-  window.addEventListener('scroll', onScroll, { passive: true, capture: false });
+  const initialDelay = connectionSpeed.includes('4g') ? 50 : 
+                      connectionSpeed.includes('3g') ? 100 : 150;
+                      
+  setTimeout(() => {
+    // Force a layout recalculation before first reveal
+    document.body.offsetHeight;
+    handleReveal();
+    
+    // Do a second check after a longer delay to catch any missed elements
+    setTimeout(handleReveal, 300);
+  }, initialDelay);
   
-  // Add resize listener to handle viewport changes
+  // Use intersection observer instead of scroll events when supported
+  // This is much more efficient and works better across different environments
+  if ('IntersectionObserver' in window && !useLowPowerMode) {
+    const observerOptions = {
+      rootMargin: '0px 0px -100px 0px',
+      threshold: [0, 0.1, 0.2]
+    };
+    
+    const intersectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const element = entry.target;
+          const delay = parseInt(element.dataset.delay || 0);
+          
+          if (delay > 0) {
+            setTimeout(() => {
+              element.classList.add('active');
+            }, delay);
+          } else {
+            requestAnimationFrame(() => {
+              element.classList.add('active');
+            });
+          }
+          
+          // Stop observing this element
+          intersectionObserver.unobserve(element);
+        }
+      });
+    }, observerOptions);
+    
+    // Observe all reveal elements
+    revealElements.forEach(element => {
+      if (!element.classList.contains('active')) {
+        intersectionObserver.observe(element);
+      }
+    });
+  } else {
+    // Fallback to scroll events for older browsers
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+  
+  // Add resize listener with debounce for better performance
+  let resizeTimeout;
   window.addEventListener('resize', () => {
-    // Clear any existing timeout
-    clearTimeout(scrollTimeout);
-    // Reset ticking flag
-    ticking = false;
-    // Trigger reveal check after resize
-    requestAnimationFrame(handleReveal);
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      // Reset ticking flag
+      ticking = false;
+      // Force recalculation of element positions
+      lastScrollY = window.scrollY;
+      // Trigger reveal check
+      handleReveal();
+    }, 100);
   }, { passive: true });
   
-  // Optimized approach for child element animations
-  // Using the same efficient approach that works well on mobile
+  // Add visibility change listener to handle tab switching
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      // Page is now visible, check for elements
+      setTimeout(handleReveal, 100);
+    }
+  });
+  
+  // Completely redesigned approach for child element animations
+  // Using CSS classes instead of inline styles for better browser optimization
   const aboutContentChildren = document.querySelectorAll('.about-left-column .about-content > *');
   
-  // Use requestAnimationFrame to batch style changes for better performance
+  // Add a style element for initial states
+  const initialStyleElement = document.createElement('style');
+  initialStyleElement.id = 'reveal-initial-style';
+  initialStyleElement.textContent = `
+    .reveal-child {
+      opacity: 0;
+      transform: translateY(20px);
+      will-change: opacity, transform;
+    }
+  `;
+  document.head.appendChild(initialStyleElement);
+  
+  // Use requestAnimationFrame to batch DOM operations
   requestAnimationFrame(() => {
-    // Apply all styles at once to minimize reflows
+    // Apply classes in a single batch
     aboutContentChildren.forEach((element, index) => {
       element.classList.add('reveal-child');
-      // Use hardware-accelerated properties
-      element.style.cssText = 'opacity: 0; transform: translateY(20px); will-change: opacity, transform;';
-      // Use shorter delays on desktop for better perceived performance
-      element.dataset.childDelay = Math.min((index + 1) * 60, 300); // Even shorter delays, capped at 300ms
+      // Calculate delay based on index, shorter for better performance
+      // Use even shorter delays in low-power mode
+      const delayMultiplier = useLowPowerMode ? 40 : 60;
+      const maxDelay = useLowPowerMode ? 200 : 300;
+      element.dataset.childDelay = Math.min((index + 1) * delayMultiplier, maxDelay);
     });
   });
   
-  // Optimized function to reveal child elements with staggered delays
-  // Using the same efficient approach that works well on mobile
+  // Completely redesigned reveal children function for maximum performance
+  // Uses CSS classes instead of inline styles for better browser optimization
   let childrenRevealed = false;
   function revealChildren() {
     // Only run once
@@ -104,36 +231,48 @@ document.addEventListener('DOMContentLoaded', function() {
     if (aboutContent && aboutContent.classList.contains('active')) {
       childrenRevealed = true;
       
+      // Add a style element for our animations if it doesn't exist
+      let styleElement = document.getElementById('reveal-animations-style');
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'reveal-animations-style';
+        document.head.appendChild(styleElement);
+      }
+      
       // Use a single requestAnimationFrame to batch animations
-      // This reduces layout thrashing and improves performance
       requestAnimationFrame(() => {
-        // Pre-calculate all children to avoid reflows during animation
+        // Pre-calculate all children to avoid reflows
         const children = Array.from(document.querySelectorAll('.reveal-child'));
         
-        // Process in batches to improve performance
-        const processBatch = (startIndex, batchSize) => {
-          const endIndex = Math.min(startIndex + batchSize, children.length);
+        // Generate CSS for all animations at once
+        let cssRules = '';
+        children.forEach((child, index) => {
+          // Create a unique class for each child
+          const className = `reveal-anim-${index}`;
+          const delay = useLowPowerMode ? index * 30 : parseInt(child.dataset.childDelay || 0);
           
-          for (let i = startIndex; i < endIndex; i++) {
-            const child = children[i];
-            const delay = parseInt(child.dataset.childDelay || 0);
-            
-            // Use hardware-accelerated properties for better performance
-            setTimeout(() => {
-              child.style.cssText = 'opacity: 1; transform: translateY(0); transition: opacity 0.4s ease, transform 0.4s ease; will-change: opacity, transform;';
-            }, delay);
-          }
+          // Add the class to the element
+          child.classList.add(className);
           
-          // Process next batch if needed
-          if (endIndex < children.length) {
-            setTimeout(() => {
-              processBatch(endIndex, batchSize);
-            }, 16); // ~1 frame at 60fps
-          }
-        };
+          // Create the CSS rule
+          cssRules += `
+            .${className} {
+              animation: revealChildAnim 0.4s ease forwards;
+              animation-delay: ${delay}ms;
+            }
+          `;
+        });
         
-        // Start processing in batches of 5 elements
-        processBatch(0, 5);
+        // Add the base animation
+        cssRules += `
+          @keyframes revealChildAnim {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `;
+        
+        // Apply all CSS at once
+        styleElement.textContent = cssRules;
       });
     }
   }
