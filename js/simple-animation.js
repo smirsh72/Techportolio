@@ -5,6 +5,67 @@
 
 // Immediately execute code to optimize loading sequence before DOM loads
 (function() {
+  // Check if user is using Chrome
+  const isChrome = /Chrome/.test(navigator.userAgent) && !/Edge/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
+  
+  // For Chrome users, set up to skip directly to hero section
+  if (isChrome) {
+    // Create and inject a style element with high priority rules to hide terminal and show hero immediately
+    const chromeStyle = document.createElement('style');
+    chromeStyle.textContent = `
+      /* Hide terminal completely for Chrome */
+      .ethereal-terminal, .terminal-content, .cursor-line, .cursor {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        z-index: -999 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+      }
+      
+      /* Show hero section immediately for Chrome */
+      .hero-section {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 999 !important;
+      }
+    `;
+    
+    // Insert at the beginning of head for highest priority
+    document.head.insertBefore(chromeStyle, document.head.firstChild);
+    
+    // Set up to transition to hero as soon as DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Chrome detected, skipping terminal animation for better performance');
+      // Force hero section to be visible immediately
+      const hero = document.querySelector('.hero-section');
+      if (hero) {
+        hero.style.display = 'flex';
+        hero.style.visibility = 'visible';
+        hero.style.opacity = '1';
+        hero.style.zIndex = '999';
+      }
+      
+      // Hide terminal elements completely
+      const terminalElements = document.querySelectorAll('.ethereal-terminal, .terminal-content, .cursor-line, .cursor');
+      terminalElements.forEach(el => {
+        el.style.display = 'none';
+        el.style.visibility = 'hidden';
+        el.style.opacity = '0';
+      });
+      
+      // Call transitionToHero directly
+      setTimeout(transitionToHero, 0);
+    }, { once: true });
+    
+    return; // Exit early for Chrome users
+  }
+  
+  // For non-Chrome browsers, continue with normal animation
   // Detect if we're on desktop
   const isDesktop = window.innerWidth >= 768;
   
@@ -285,16 +346,6 @@ function startTerminalAnimation() {
   // Get terminal elements
   const terminalContent = document.querySelector('.terminal-content');
   const terminal = document.querySelector('.ethereal-terminal');
-  
-  // Check if user is using Chrome
-  const isChrome = /Chrome/.test(navigator.userAgent) && !/Edge/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
-  
-  // Skip animation for Chrome users
-  if (isChrome) {
-    console.log('Chrome detected, skipping terminal animation for better performance');
-    transitionToHero();
-    return;
-  }
   
   if (!terminal || !terminalContent) {
     console.error('Terminal elements not found, skipping animation');
