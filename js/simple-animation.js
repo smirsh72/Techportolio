@@ -6,15 +6,23 @@
 // Enhanced preload function that properly prepares the browser
 function preloadResources() {
   return new Promise((resolve) => {
+    // Hide welcome symbol initially to prevent it from showing before terminal
+    const welcomeSymbol = document.querySelector('.welcome-symbol');
+    const welcomeMessage = document.querySelector('.welcome-message');
+    if (welcomeSymbol) welcomeSymbol.style.display = 'none';
+    if (welcomeMessage) welcomeMessage.style.display = 'none';
+    
     // Force layout calculations to happen before animation starts
     // This helps prevent layout thrashing during animation
     const terminalContent = document.querySelector('.terminal-content');
     const terminal = document.querySelector('.ethereal-terminal');
     
     if (terminal && terminalContent) {
-      // Apply hardware acceleration hints
+      // Apply hardware acceleration hints and ensure terminal is visible first
       terminal.style.willChange = 'opacity, transform';
       terminal.style.transform = 'translateZ(0)';
+      terminal.style.display = 'block';
+      terminal.style.opacity = '1';
       
       // Force layout calculation
       void terminal.offsetHeight;
