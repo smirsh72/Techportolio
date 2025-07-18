@@ -593,19 +593,20 @@ document.addEventListener('DOMContentLoaded', function() {
           try {
             if (chatConfig.debugMode) console.log(`Trying backend URL: ${url}`);
             
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-            
-            const response = await fetch(url, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ message }),
-              signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
+            // Use a longer timeout (10 seconds) and handle it more gracefully
+            const response = await Promise.race([
+              fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message }),
+                // Don't use AbortSignal here to avoid the abort error
+              }),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error(`Request to ${url} timed out after 10 seconds`)), 10000)
+              )
+            ]);
             
             if (!response.ok) {
               const errorText = await response.text();
@@ -616,7 +617,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // Store the successful URL base for future use
             chatConfig.backendURL = url.replace('/api/chat', '');
             if (chatConfig.debugMode) console.log(`Successfully connected to backend at: ${url}`);
-            return data.response;
+            
+            // Check if the response has a message property (from backend) or response property
+            if (data.message) {
+              return data.message;
+            } else if (data.response) {
+              return data.response;
+            } else {
+              // If neither exists, throw an error
+              throw new Error('Invalid response format from API');
+            }
           } catch (err) {
             console.warn(`Failed to connect to ${url}:`, err.message);
             lastError = err;
@@ -695,6 +705,11 @@ document.addEventListener('DOMContentLoaded', function() {
       // Get AI response (hardcoded or from OpenAI)
       const response = await getAIResponse(message);
       
+      // Safety check for undefined or null response
+      if (!response) {
+        throw new Error('Received empty response from API');
+      }
+      
       // Calculate typing delay based on response length (simulate natural typing)
       const typingDelay = Math.min(1500, response.length * 10);
       
@@ -706,25 +721,33 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
       console.error('Error getting AI response:', error);
       
-      // Try to get a hardcoded response as fallback
-      const fallbackResponse = await getHardcodedResponse(message);
-      
-      setTimeout(() => {
-        typingIndicator.remove();
-        if (fallbackResponse !== responses.default) {
-          // We found a matching hardcoded response
-          addMessage(fallbackResponse);
-        } else {
-          // No matching hardcoded response, show error
-          addMessage("I'm having trouble connecting to my backend. I'll use my local knowledge instead. What would you like to know about Shan?");
-          // Automatically try to fix the connection
-          checkBackendConnection().then(connected => {
-            if (connected && chatConfig.debugMode) {
-              console.log('✅ Reconnected to backend successfully');
-            }
-          });
-        }
-      }, 1000);
+      try {
+        // Try to get a hardcoded response as fallback
+        const fallbackResponse = await getHardcodedResponse(message);
+        
+        setTimeout(() => {
+          typingIndicator.remove();
+          if (fallbackResponse && fallbackResponse !== responses.default) {
+            // We found a matching hardcoded response
+            addMessage(fallbackResponse);
+          } else {
+            // No matching hardcoded response, show error
+            addMessage("I'm having trouble connecting to my backend. I'll use my local knowledge instead. What would you like to know about Shan?");
+            // Automatically try to fix the connection
+            checkBackendConnection().then(connected => {
+              if (connected && chatConfig.debugMode) {
+                console.log('✅ Reconnected to backend successfully');
+              }
+            });
+          }
+        }, 1000);
+      } catch (fallbackError) {
+        console.error('Error getting fallback response:', fallbackError);
+        setTimeout(() => {
+          typingIndicator.remove();
+          addMessage("I'm having trouble processing your request. Please try again later.");
+        }, 1000);
+      }
     }
   }
   
