@@ -387,6 +387,15 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(() => {
     // Initialize chat with welcome message
     addWelcomeMessage();
+    
+    // Check backend connection on startup
+    checkBackendConnection().then(connected => {
+      if (connected) {
+        console.log('✅ Backend connection established on startup');
+      } else {
+        console.warn('⚠️ Backend connection failed on startup, will use hardcoded responses');
+      }
+    });
   }, 3000); // 3 second delay - increased for better separation from animations
   
   // Check if the user message matches any hardcoded response keywords
@@ -472,7 +481,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Configuration for chat responses
   const chatConfig = {
     useAPI: true, // Enabled API mode by default
-    backendURL: null // Will be automatically determined based on environment
+    backendURL: null, // Will be automatically determined based on environment
+    debugMode: true // Enable debug mode to help troubleshoot issues
   };
   
   // Function to toggle between API and hardcoded responses
@@ -493,22 +503,52 @@ document.addEventListener('DOMContentLoaded', function() {
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       
       // Use the appropriate backend URL based on environment
-      const healthCheckURL = isLocalhost
-        ? window.location.protocol + '//localhost:10000/health'
-        : 'https://portf-ti65.onrender.com/health';
+      const healthCheckURLs = isLocalhost
+        ? [
+            window.location.protocol + '//localhost:10000/health',
+            window.location.protocol + '//localhost:8742/health'
+          ]
+        : [
+            'https://portf-ti65.onrender.com/health',
+            'https://shan-portfolio-backend.onrender.com/health'
+          ];
       
-      const response = await fetch(healthCheckURL, { method: 'GET' });
-      const data = await response.json();
-      
-      if (response.ok && data.status === 'ok') {
-        console.log('✅ Backend connection successful');
-        return true;
-      } else {
-        console.warn('⚠️ Backend responded but with unexpected data:', data);
-        return false;
+      // Try each health check URL
+      for (const url of healthCheckURLs) {
+        try {
+          if (chatConfig.debugMode) console.log(`Checking backend health at: ${url}`);
+          
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+          
+          const response = await fetch(url, { 
+            method: 'GET',
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          const data = await response.json();
+          
+          if (response.ok && data.status === 'ok') {
+            console.log(`✅ Backend connection successful at ${url}`);
+            // Store the base URL for future API calls
+            chatConfig.backendURL = url.replace('/health', '');
+            return true;
+          } else {
+            console.warn(`⚠️ Backend at ${url} responded but with unexpected data:`, data);
+          }
+        } catch (err) {
+          console.warn(`⚠️ Failed to connect to ${url}:`, err.message);
+          // Continue to the next URL
+        }
       }
+      
+      // If we get here, all URLs failed
+      console.error('❌ All backend connections failed');
+      return false;
     } catch (error) {
-      console.error('❌ Backend connection failed:', error);
+      console.error('❌ Backend connection check failed:', error);
       return false;
     }
   }
@@ -519,44 +559,66 @@ document.addEventListener('DOMContentLoaded', function() {
   // Process user message and get response
   async function getAIResponse(message) {
     // Check if we should use API or hardcoded responses
-    
     if (chatConfig.useAPI) {
       try {
+        // If we don't have a backendURL yet, try to establish one
+        if (!chatConfig.backendURL) {
+          const isConnected = await checkBackendConnection();
+          if (!isConnected) {
+            console.warn('⚠️ Could not establish backend connection, falling back to hardcoded responses');
+            return await getHardcodedResponse(message);
+          }
+        }
+        
         // Determine if we're in development or production
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
-        // Try multiple backend URLs in order
-        const backendURLs = isLocalhost 
-          ? [window.location.protocol + '//localhost:10000/api/chat']
-          : ['https://portf-ti65.onrender.com/api/chat'];
+        // Use the established backend URL or try the defaults
+        const backendURLs = chatConfig.backendURL 
+          ? [`${chatConfig.backendURL}/api/chat`]
+          : isLocalhost 
+            ? [
+                window.location.protocol + '//localhost:10000/api/chat',
+                window.location.protocol + '//localhost:8742/api/chat'
+              ]
+            : [
+                'https://portf-ti65.onrender.com/api/chat',
+                'https://shan-portfolio-backend.onrender.com/api/chat'
+              ];
         
         let lastError = null;
         
         // Try each backend URL until one works
         for (const url of backendURLs) {
           try {
-            console.log(`Trying backend URL: ${url}`);
+            if (chatConfig.debugMode) console.log(`Trying backend URL: ${url}`);
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+            
             const response = await fetch(url, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({ message }),
-              // Set a timeout to avoid waiting too long
-              signal: AbortSignal.timeout(5000)
+              signal: controller.signal
             });
             
+            clearTimeout(timeoutId);
+            
             if (!response.ok) {
-              throw new Error(`API responded with status: ${response.status}`);
+              const errorText = await response.text();
+              throw new Error(`API responded with status: ${response.status}, message: ${errorText}`);
             }
             
             const data = await response.json();
-            // Store the successful URL for future use
-            chatConfig.backendURL = url;
-            console.log(`Successfully connected to backend at: ${url}`);
+            // Store the successful URL base for future use
+            chatConfig.backendURL = url.replace('/api/chat', '');
+            if (chatConfig.debugMode) console.log(`Successfully connected to backend at: ${url}`);
             return data.response;
           } catch (err) {
-            console.warn(`Failed to connect to ${url}:`, err);
+            console.warn(`Failed to connect to ${url}:`, err.message);
             lastError = err;
             // Continue to the next URL
           }
@@ -643,9 +705,25 @@ document.addEventListener('DOMContentLoaded', function() {
       }, typingDelay);
     } catch (error) {
       console.error('Error getting AI response:', error);
+      
+      // Try to get a hardcoded response as fallback
+      const fallbackResponse = await getHardcodedResponse(message);
+      
       setTimeout(() => {
         typingIndicator.remove();
-        addMessage("I'm having trouble processing that request. Could you try asking something else?");
+        if (fallbackResponse !== responses.default) {
+          // We found a matching hardcoded response
+          addMessage(fallbackResponse);
+        } else {
+          // No matching hardcoded response, show error
+          addMessage("I'm having trouble connecting to my backend. I'll use my local knowledge instead. What would you like to know about Shan?");
+          // Automatically try to fix the connection
+          checkBackendConnection().then(connected => {
+            if (connected && chatConfig.debugMode) {
+              console.log('✅ Reconnected to backend successfully');
+            }
+          });
+        }
       }, 1000);
     }
   }
