@@ -286,6 +286,16 @@ function startTerminalAnimation() {
   const terminalContent = document.querySelector('.terminal-content');
   const terminal = document.querySelector('.ethereal-terminal');
   
+  // Check if user is using Chrome
+  const isChrome = /Chrome/.test(navigator.userAgent) && !/Edge/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
+  
+  // Skip animation for Chrome users
+  if (isChrome) {
+    console.log('Chrome detected, skipping terminal animation for better performance');
+    transitionToHero();
+    return;
+  }
+  
   if (!terminal || !terminalContent) {
     console.error('Terminal elements not found, skipping animation');
     // Fallback to showing hero section directly
