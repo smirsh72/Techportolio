@@ -282,6 +282,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Main terminal animation function with optimizations for desktop
 function startTerminalAnimation() {
+  // Get terminal elements
+  const terminalContent = document.querySelector('.terminal-content');
+  const terminal = document.querySelector('.ethereal-terminal');
+  
+  if (!terminal || !terminalContent) {
+    console.error('Terminal elements not found, skipping animation');
+    // Fallback to showing hero section directly
+    transitionToHero();
+    return;
+  }
+  
   // Commands to display in sequence
   const commands = [
     { text: 'initialize', isCommand: true },
@@ -295,30 +306,20 @@ function startTerminalAnimation() {
     { text: 'welcome', isCommand: true }
   ];
   
-  const terminalContent = document.querySelector('.terminal-content');
-  const terminal = document.querySelector('.ethereal-terminal');
-  
-  // Ensure terminal is visible and has hardware acceleration
-  if (!terminal || !terminalContent) {
-    console.error('Terminal elements not found, skipping animation');
-    // Fallback to showing hero section directly
-    transitionToHero();
-    return;
-  }
-  
-  // Clear any existing content to prevent duplicate animations
-  terminalContent.innerHTML = '';
-  
-  // Make sure terminal is visible with hardware acceleration
-  terminal.style.opacity = '1';
-  terminal.style.willChange = 'opacity, transform';
-  terminal.style.transform = 'translateZ(0)';
-  
-  // Force a reflow to ensure styles are applied immediately
-  void terminal.offsetHeight;
-  
   // Add blinking cursor style immediately
   addCursorStyle();
+  
+  // Clear any existing content in the terminal to ensure we start fresh
+  // This removes any initial $ sign that might be in the HTML
+  const initialCursorLine = terminalContent.querySelector('.cursor-line');
+  if (initialCursorLine) {
+    // Keep only the cursor element, remove any text nodes (including the $ sign)
+    const cursor = initialCursorLine.querySelector('.cursor');
+    if (cursor) {
+      initialCursorLine.innerHTML = '';
+      initialCursorLine.appendChild(cursor);
+    }
+  }
   
   // Add a simple pink terminal blinker
   const pinkBlinker = document.createElement('div');
