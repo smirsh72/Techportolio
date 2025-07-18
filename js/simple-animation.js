@@ -3,31 +3,13 @@
  * Skip loading screen and show hero section immediately
  */
 
-// Preload critical resources before starting animation
+// Simplified preload function - no cursor image loading
 function preloadResources() {
   return new Promise((resolve) => {
-    // Create a counter to track when all resources are loaded
-    let loadedCount = 0;
-    const totalResources = 1; // Increase this if adding more resources to preload
-    
-    // Function to call when a resource is loaded
-    const resourceLoaded = () => {
-      loadedCount++;
-      if (loadedCount >= totalResources) {
-        resolve();
-      }
-    };
-    
-    // Preload the cursor image
-    const cursorImage = new Image();
-    cursorImage.onload = resourceLoaded;
-    cursorImage.onerror = resourceLoaded; // Continue even if loading fails
-    cursorImage.src = 'images/cursor.png'; // Adjust path if needed
-    
-    // If no resources need loading, resolve immediately
-    if (totalResources === 0) {
+    // Small delay to ensure browser is ready
+    setTimeout(() => {
       resolve();
-    }
+    }, 50);
   });
 }
 
@@ -132,6 +114,24 @@ function startTerminalAnimation() {
   // Add blinking cursor style immediately
   addCursorStyle();
   
+  // Add a simple pink terminal blinker
+  const pinkBlinker = document.createElement('div');
+  pinkBlinker.className = 'pink-blinker';
+  terminalContent.appendChild(pinkBlinker);
+  
+  // Add CSS for the pink blinker
+  const pinkBlinkerStyle = document.createElement('style');
+  pinkBlinkerStyle.textContent = `
+    .pink-blinker {
+      width: 10px;
+      height: 18px;
+      background-color: #ff69b4; /* Hot pink */
+      margin: 5px 0;
+      animation: blink 1s step-end infinite;
+    }
+  `;
+  document.head.appendChild(pinkBlinkerStyle);
+  
   let currentCommandIndex = 0;
   
   // Process commands one by one
@@ -180,6 +180,9 @@ function typeCommand(command, callback) {
   const lineElement = document.createElement('div');
   lineElement.className = 'line';
   lineElement.style.opacity = '1';
+  
+  // Append the line to the terminal content
+  terminalContent.appendChild(lineElement);
   
   // Add prompt if this is a command (not output)
   if (command.isCommand) {
