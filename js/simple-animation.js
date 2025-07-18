@@ -3,57 +3,199 @@
  * Skip loading screen and show hero section immediately
  */
 
-// Immediately execute code to hide welcome elements before DOM loads
+// Immediately execute code to optimize loading sequence before DOM loads
 (function() {
+  // Detect if we're on desktop
+  const isDesktop = window.innerWidth >= 768;
+  
   // Create and inject a style element with high priority rules
   const style = document.createElement('style');
-  style.textContent = `
-    .ethereal-welcome, .welcome-symbol, .welcome-message {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      position: absolute !important;
-      z-index: -999 !important;
-    }
-    .ethereal-terminal {
-      display: block !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      z-index: 999 !important;
-    }
-  `;
+  
+  // More aggressive hiding for desktop
+  if (isDesktop) {
+    style.textContent = `
+      /* Completely hide welcome elements */
+      .ethereal-welcome, .welcome-symbol, .welcome-message {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        z-index: -999 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+      }
+      
+      /* Force terminal to be visible */
+      .ethereal-terminal {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 999 !important;
+        transform: translateZ(0) !important;
+        will-change: opacity, transform !important;
+      }
+      
+      /* Force terminal content to be visible */
+      .terminal-content {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+      
+      /* Ensure pink cursor is visible */
+      .cursor {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background-color: #f472b6 !important;
+      }
+    `;
+  } else {
+    // Less aggressive for mobile since it's already working
+    style.textContent = `
+      .ethereal-welcome, .welcome-symbol, .welcome-message {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+      }
+      .ethereal-terminal {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+    `;
+  }
+  
   // Insert at the beginning of head for highest priority
   document.head.insertBefore(style, document.head.firstChild);
+  
+  // For desktop, also modify the DOM as soon as it's available
+  if (isDesktop) {
+    document.addEventListener('DOMContentLoaded', function() {
+      // Hide welcome elements again to be extra sure
+      const welcomeElements = document.querySelectorAll('.ethereal-welcome, .welcome-symbol, .welcome-message');
+      welcomeElements.forEach(el => {
+        el.style.display = 'none';
+        el.style.visibility = 'hidden';
+        el.style.opacity = '0';
+        el.style.width = '0';
+        el.style.height = '0';
+        el.style.overflow = 'hidden';
+      });
+      
+      // Force terminal to be visible
+      const terminal = document.querySelector('.ethereal-terminal');
+      if (terminal) {
+        terminal.style.display = 'block';
+        terminal.style.visibility = 'visible';
+        terminal.style.opacity = '1';
+      }
+    }, { once: true });
+  }
 })();
 
-// Enhanced preload function that properly prepares the browser
+// Enhanced preload function with desktop-specific optimizations
 function preloadResources() {
   return new Promise((resolve) => {
-    // Hide welcome symbol initially to prevent it from showing before terminal
+    // Detect if we're on desktop
+    const isDesktop = window.innerWidth >= 768;
+    
+    // Get elements
     const welcomeSymbol = document.querySelector('.welcome-symbol');
     const welcomeMessage = document.querySelector('.welcome-message');
-    if (welcomeSymbol) welcomeSymbol.style.display = 'none';
-    if (welcomeMessage) welcomeMessage.style.display = 'none';
-    
-    // Force layout calculations to happen before animation starts
-    // This helps prevent layout thrashing during animation
+    const etherealWelcome = document.querySelector('.ethereal-welcome');
     const terminalContent = document.querySelector('.terminal-content');
     const terminal = document.querySelector('.ethereal-terminal');
+    const cursor = document.querySelector('.cursor');
     
-    if (terminal && terminalContent) {
-      // Apply hardware acceleration hints and ensure terminal is visible first
-      terminal.style.willChange = 'opacity, transform';
-      terminal.style.transform = 'translateZ(0)';
-      terminal.style.display = 'block';
-      terminal.style.opacity = '1';
+    // More aggressive approach for desktop
+    if (isDesktop) {
+      // Completely remove welcome elements from flow
+      if (welcomeSymbol) {
+        welcomeSymbol.style.display = 'none';
+        welcomeSymbol.style.visibility = 'hidden';
+        welcomeSymbol.style.opacity = '0';
+        welcomeSymbol.style.position = 'absolute';
+        welcomeSymbol.style.pointerEvents = 'none';
+        welcomeSymbol.style.width = '0';
+        welcomeSymbol.style.height = '0';
+        welcomeSymbol.style.overflow = 'hidden';
+      }
+      
+      if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+        welcomeMessage.style.visibility = 'hidden';
+        welcomeMessage.style.opacity = '0';
+        welcomeMessage.style.position = 'absolute';
+        welcomeMessage.style.pointerEvents = 'none';
+        welcomeMessage.style.width = '0';
+        welcomeMessage.style.height = '0';
+        welcomeMessage.style.overflow = 'hidden';
+      }
+      
+      if (etherealWelcome) {
+        etherealWelcome.style.display = 'none';
+        etherealWelcome.style.visibility = 'hidden';
+        etherealWelcome.style.opacity = '0';
+        etherealWelcome.style.position = 'absolute';
+        etherealWelcome.style.pointerEvents = 'none';
+        etherealWelcome.style.width = '0';
+        etherealWelcome.style.height = '0';
+        etherealWelcome.style.overflow = 'hidden';
+      }
+      
+      // Force terminal to be visible with hardware acceleration
+      if (terminal) {
+        terminal.style.display = 'block';
+        terminal.style.visibility = 'visible';
+        terminal.style.opacity = '1';
+        terminal.style.willChange = 'opacity, transform';
+        terminal.style.transform = 'translateZ(0)';
+        terminal.style.position = 'relative';
+        terminal.style.zIndex = '999';
+      }
+      
+      // Ensure terminal content is visible
+      if (terminalContent) {
+        terminalContent.style.display = 'block';
+        terminalContent.style.visibility = 'visible';
+        terminalContent.style.opacity = '1';
+      }
+      
+      // Make sure cursor is visible
+      if (cursor) {
+        cursor.style.display = 'inline-block';
+        cursor.style.visibility = 'visible';
+        cursor.style.opacity = '1';
+        cursor.style.backgroundColor = '#f472b6';
+      }
       
       // Force layout calculation
-      void terminal.offsetHeight;
-      void terminalContent.offsetHeight;
+      if (terminal) void terminal.offsetHeight;
+      if (terminalContent) void terminalContent.offsetHeight;
+      
+      // Use a small timeout to ensure styles are applied before animation starts
+      setTimeout(() => resolve(), 10);
+    } else {
+      // Less aggressive approach for mobile since it's already working
+      if (welcomeSymbol) welcomeSymbol.style.display = 'none';
+      if (welcomeMessage) welcomeMessage.style.display = 'none';
+      if (etherealWelcome) etherealWelcome.style.display = 'none';
+      
+      if (terminal && terminalContent) {
+        terminal.style.willChange = 'opacity, transform';
+        terminal.style.transform = 'translateZ(0)';
+        terminal.style.display = 'block';
+        terminal.style.opacity = '1';
+        
+        void terminal.offsetHeight;
+        void terminalContent.offsetHeight;
+      }
+      
+      resolve();
     }
-    
-    // Resolve immediately - we'll use requestIdleCallback later
-    resolve();
   });
 }
 
@@ -100,6 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
       animateHeroElements();
     }
   } else {
+    // Detect if we're on desktop
+    const isDesktop = window.innerWidth >= 768;
+    
     // Ensure terminal is visible before anything else
     if (terminal) {
       terminal.style.display = 'block';
@@ -107,11 +252,31 @@ document.addEventListener('DOMContentLoaded', () => {
       terminal.style.opacity = '1';
     }
     
-    // Preload resources first, then start animation
-    preloadResources().then(() => {
-      // Start animation immediately without waiting
+    // For desktop, use a more aggressive approach
+    if (isDesktop) {
+      // Hide welcome elements completely
+      const welcomeElements = document.querySelectorAll('.ethereal-welcome, .welcome-symbol, .welcome-message');
+      welcomeElements.forEach(el => {
+        if (el) {
+          el.style.display = 'none';
+          el.style.visibility = 'hidden';
+          el.style.opacity = '0';
+          el.style.position = 'absolute';
+          el.style.pointerEvents = 'none';
+          el.style.width = '0';
+          el.style.height = '0';
+          el.style.overflow = 'hidden';
+        }
+      });
+      
+      // Start animation immediately without preloading
       startTerminalAnimation();
-    });
+    } else {
+      // For mobile, use the normal flow since it's working
+      preloadResources().then(() => {
+        startTerminalAnimation();
+      });
+    }
   }
 });
 
