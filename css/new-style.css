@@ -237,6 +237,9 @@ body {
     z-index: 10;
     opacity: 1;
     transition: opacity 1s ease, transform 1s ease;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    contain: layout paint;
 }
 
 .terminal-header {

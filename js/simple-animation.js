@@ -365,10 +365,19 @@ function startTerminalAnimation() {
     });
   }
   
-  // Start processing commands using requestAnimationFrame
-  // This ensures the animation starts in sync with the browser's refresh rate
+  // Force a paint before starting the animation to fix Chrome fullscreen lag
+  // Explicitly set display to block and force a layout recalculation
+  terminal.style.display = 'block';
+  
+  // Force a reflow/repaint by accessing a layout property
+  // This will make Chrome commit the first frame before animation starts
+  void terminal.getBoundingClientRect();
+  
+  // Use double requestAnimationFrame to ensure the browser has committed the first frame
   requestAnimationFrame(() => {
-    processNextCommand();
+    requestAnimationFrame(() => {
+      processNextCommand();
+    });
   });
 }
 
