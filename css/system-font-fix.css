@@ -1,0 +1,23 @@
+/* System font override for terminal animation ONLY */
+
+/* Apply system monospace font ONLY to terminal elements */
+#loading-screen .ethereal-terminal,
+#loading-screen .terminal-content,
+#loading-screen .line,
+#loading-screen .prompt,
+#loading-screen .command,
+#loading-screen .output,
+#loading-screen .cursor,
+#loading-screen .welcome-message,
+#loading-screen .money-sign,
+#loading-screen .welcome-text,
+#loading-screen .changing-word,
+#loading-screen .static-text {
+  font-family: "Courier New", Courier, monospace !important;
+}
+
+/* Make the money sign more visible with system font */
+#loading-screen .money-sign {
+  font-weight: bold;
+  font-size: 2.5rem;
+}
