@@ -3,6 +3,34 @@
  * Skip loading screen and show hero section immediately
  */
 
+// Preload critical resources before starting animation
+function preloadResources() {
+  return new Promise((resolve) => {
+    // Create a counter to track when all resources are loaded
+    let loadedCount = 0;
+    const totalResources = 1; // Increase this if adding more resources to preload
+    
+    // Function to call when a resource is loaded
+    const resourceLoaded = () => {
+      loadedCount++;
+      if (loadedCount >= totalResources) {
+        resolve();
+      }
+    };
+    
+    // Preload the cursor image
+    const cursorImage = new Image();
+    cursorImage.onload = resourceLoaded;
+    cursorImage.onerror = resourceLoaded; // Continue even if loading fails
+    cursorImage.src = 'images/cursor.png'; // Adjust path if needed
+    
+    // If no resources need loading, resolve immediately
+    if (totalResources === 0) {
+      resolve();
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // Pre-load critical elements and apply hardware acceleration hints
   const loadingScreen = document.getElementById('loading-screen');
@@ -14,6 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (terminal) {
     terminal.style.willChange = 'opacity, transform';
     terminal.style.transform = 'translateZ(0)';
+    
+    // Ensure terminal is visible immediately to prevent flicker
+    terminal.style.opacity = '1';
+    
+    // Force a reflow to ensure styles are applied immediately
+    void terminal.offsetHeight;
   }
   
   // Ensure about section is not visible initially
@@ -45,19 +79,20 @@ document.addEventListener('DOMContentLoaded', () => {
       animateHeroElements();
     }
   } else {
-    // Use requestAnimationFrame to start animation in the next frame
-    // This helps prevent the initial 2-second pause on desktop
-    requestAnimationFrame(() => {
-      // Start normal loading sequence with a slight delay
-      // to ensure browser has finished any initial rendering
-      setTimeout(() => {
-        startTerminalAnimation();
-      }, 50);
+    // Preload resources first, then start animation
+    preloadResources().then(() => {
+      // Use double requestAnimationFrame to ensure browser is ready
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Start animation immediately without delay
+          startTerminalAnimation();
+        });
+      });
     });
   }
 });
 
-// Main terminal animation function
+// Main terminal animation function with optimizations for desktop
 function startTerminalAnimation() {
   // Commands to display in sequence
   const commands = [
@@ -76,15 +111,23 @@ function startTerminalAnimation() {
   const terminal = document.querySelector('.ethereal-terminal');
   
   // Ensure terminal is visible and has hardware acceleration
-  if (terminal) {
-    // Make sure terminal is visible
-    terminal.style.opacity = '1';
-    // Apply hardware acceleration
-    terminal.style.willChange = 'opacity, transform';
-    terminal.style.transform = 'translateZ(0)';
-    // Force a reflow to ensure styles are applied immediately
-    void terminal.offsetHeight;
+  if (!terminal || !terminalContent) {
+    console.error('Terminal elements not found, skipping animation');
+    // Fallback to showing hero section directly
+    transitionToHero();
+    return;
   }
+  
+  // Clear any existing content to prevent duplicate animations
+  terminalContent.innerHTML = '';
+  
+  // Make sure terminal is visible with hardware acceleration
+  terminal.style.opacity = '1';
+  terminal.style.willChange = 'opacity, transform';
+  terminal.style.transform = 'translateZ(0)';
+  
+  // Force a reflow to ensure styles are applied immediately
+  void terminal.offsetHeight;
   
   // Add blinking cursor style immediately
   addCursorStyle();
@@ -250,7 +293,7 @@ function addCursorStyle() {
   }
 }
 
-// Transition from terminal to hero section
+// Transition from terminal to hero section with optimizations for desktop
 function transitionToHero() {
   const terminal = document.querySelector('.ethereal-terminal');
   const etherealWelcome = document.querySelector('.ethereal-welcome');
@@ -263,28 +306,39 @@ function transitionToHero() {
     about.style.opacity = '0';
   }
   
+  // Prepare hero section before animation starts
+  if (hero) {
+    // Pre-position hero but keep it hidden
+    hero.style.display = 'flex';
+    hero.style.opacity = '0';
+    hero.style.position = 'relative';
+    hero.style.zIndex = '10';
+    
+    // Force a reflow to ensure styles are applied immediately
+    void hero.offsetHeight;
+  }
+  
   // Fade out terminal (faster)
   if (terminal) {
-    terminal.style.transition = 'opacity 400ms ease-out, transform 400ms ease-out';
+    terminal.style.transition = 'opacity 350ms ease-out, transform 350ms ease-out';
     terminal.style.opacity = '0';
     terminal.style.transform = 'translateY(-20px)';
   }
   
-  // After terminal fades out, show hero with a slight delay
-  setTimeout(() => {
-    // Skip welcome message and go directly to hero
+  // Use requestAnimationFrame for smoother transition
+  requestAnimationFrame(() => {
     if (etherealWelcome) {
       // Hide welcome message completely
       etherealWelcome.style.display = 'none';
     }
     
-    // Show hero with a slight pause for better transition feel
-    setTimeout(showHero, 180);
-  }, 150);
+    // Show hero immediately without delay
+    showHero();
+  });
   
-  // Function to show hero section
+  // Function to show hero section with optimized performance
   function showHero() {
-    // Hide loading screen
+    // Hide loading screen immediately
     if (loadingScreen) {
       loadingScreen.style.display = 'none';
       loadingScreen.style.opacity = '0';
@@ -297,11 +351,10 @@ function transitionToHero() {
       about.style.transition = 'opacity 0ms';
     }
     
-    // Show hero
+    // Show hero with optimized rendering
     if (hero) {
       // Force hero to be visible and positioned correctly
       hero.style.display = 'flex';
-      hero.style.opacity = '0';
       hero.style.position = 'relative';
       hero.style.zIndex = '10';
       
@@ -316,35 +369,36 @@ function transitionToHero() {
       // Force a reflow to ensure styles are applied immediately
       void hero.offsetHeight;
       
-      // Fade in hero with enhanced cloud-like floating effect (slightly slower)
-      setTimeout(() => {
-        // Use the same bouncy cubic-bezier curve with slightly longer duration
-        hero.style.transition = 'opacity 650ms cubic-bezier(0.34, 1.56, 0.64, 1), transform 650ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+      // Use requestAnimationFrame for smoother animation timing
+      requestAnimationFrame(() => {
+        // Fade in hero with enhanced cloud-like floating effect
+        hero.style.transition = 'opacity 500ms ease-out, transform 700ms cubic-bezier(0.34, 1.56, 0.64, 1)';
         hero.style.opacity = '1';
         hero.style.transform = 'translateY(0)';
         
-        // Animate hero elements with slight delay
-        setTimeout(animateHeroElements, 250);
+        // Animate hero elements with staggered timing
+        // Use requestAnimationFrame to ensure browser is ready
+        requestAnimationFrame(animateHeroElements);
         
-        // Allow about section to fade in with enhanced cloud-like effect (faster)
+        // Allow about section to fade in with enhanced cloud-like effect
         if (about) {
           about.style.willChange = 'opacity, transform';
           about.style.transform = 'translateY(20px)';
-          about.style.opacity = '0';
           
+          // Delay about section animation until hero is visible
           setTimeout(() => {
-            about.style.transition = 'opacity 700ms cubic-bezier(0.34, 1.56, 0.64, 1), transform 700ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+            about.style.transition = 'opacity 800ms ease-out, transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1)';
             about.style.opacity = '1';
             about.style.transform = 'translateY(0)';
-            
-            // Clean up hardware acceleration after animations complete
-            setTimeout(() => {
-              hero.style.willChange = 'auto';
-              about.style.willChange = 'auto';
-            }, 800);
-          }, 600);
+          }, 800);
         }
-      }, 100);
+        
+        // Clean up hardware acceleration after animations complete
+        setTimeout(() => {
+          hero.style.willChange = 'auto';
+          if (about) about.style.willChange = 'auto';
+        }, 1500);
+      });
     }
   }
 }
