@@ -4,10 +4,17 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Get main sections
+  // Pre-load critical elements and apply hardware acceleration hints
   const loadingScreen = document.getElementById('loading-screen');
   const hero = document.querySelector('.hero');
   const about = document.getElementById('about');
+  const terminal = document.querySelector('.ethereal-terminal');
+  
+  // Apply hardware acceleration to terminal immediately to prevent animation lag
+  if (terminal) {
+    terminal.style.willChange = 'opacity, transform';
+    terminal.style.transform = 'translateZ(0)';
+  }
   
   // Ensure about section is not visible initially
   if (about) {
@@ -38,9 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
       animateHeroElements();
     }
   } else {
-    // Start normal loading sequence
-    // The loading sequence will handle the transition to hero
-    startTerminalAnimation();
+    // Use requestAnimationFrame to start animation in the next frame
+    // This helps prevent the initial 2-second pause on desktop
+    requestAnimationFrame(() => {
+      // Start normal loading sequence with a slight delay
+      // to ensure browser has finished any initial rendering
+      setTimeout(() => {
+        startTerminalAnimation();
+      }, 50);
+    });
   }
 });
 
@@ -60,9 +73,18 @@ function startTerminalAnimation() {
   ];
   
   const terminalContent = document.querySelector('.terminal-content');
+  const terminal = document.querySelector('.ethereal-terminal');
   
-  // Use the existing cursor line in the HTML
-  // No need to clear or add a new one
+  // Ensure terminal is visible and has hardware acceleration
+  if (terminal) {
+    // Make sure terminal is visible
+    terminal.style.opacity = '1';
+    // Apply hardware acceleration
+    terminal.style.willChange = 'opacity, transform';
+    terminal.style.transform = 'translateZ(0)';
+    // Force a reflow to ensure styles are applied immediately
+    void terminal.offsetHeight;
+  }
   
   // Add blinking cursor style immediately
   addCursorStyle();
@@ -78,23 +100,26 @@ function startTerminalAnimation() {
       // Make sure cursor style is applied
       addCursorStyle();
       
-      // Wait a moderate time before transitioning to hero
-      setTimeout(() => {
-        transitionToHero();
-      }, 1000);
+      // Transition to hero section with minimal delay
+      requestAnimationFrame(() => {
+        setTimeout(transitionToHero, 200);
+      });
       return;
     }
     
     const command = commands[currentCommandIndex];
     typeCommand(command, () => {
       currentCommandIndex++;
-      // Balanced delays between commands and outputs
-      setTimeout(processNextCommand, command.isCommand ? 180 : 300);
+      // Add a small delay between commands for better readability
+      setTimeout(processNextCommand, command.isCommand ? 100 : 150);
     });
   }
   
-  // Start processing commands
-  processNextCommand();
+  // Start processing commands using requestAnimationFrame
+  // This ensures the animation starts in sync with the browser's refresh rate
+  requestAnimationFrame(() => {
+    processNextCommand();
+  });
 }
 
 // Type a command with animation effect
@@ -108,49 +133,101 @@ function typeCommand(command, callback) {
     existingCursor.parentElement.remove();
   }
   
-  // Create new line element
+  // Create line element
   const lineElement = document.createElement('div');
-  lineElement.className = command.isCommand ? 'terminal-line' : 'terminal-line output';
+  lineElement.className = 'line';
+  lineElement.style.opacity = '1';
   
-  // For commands, add the prefix
+  // Add prompt if this is a command (not output)
   if (command.isCommand) {
-    lineElement.innerHTML = '$ ';
-  }
-  
-  // Add text span that will be typed
-  const textSpan = document.createElement('span');
-  textSpan.className = command.isCommand ? 'command' : '';
-  lineElement.appendChild(textSpan);
-  
-  // Add cursor span (using CSS styling instead of block character)
-  const cursorSpan = document.createElement('span');
-  cursorSpan.className = 'cursor';
-  cursorSpan.textContent = '';
-  lineElement.appendChild(cursorSpan);
-  
-  // Add line to terminal
-  terminalContent.appendChild(lineElement);
-  
-  // Type characters one by one (faster)
-  let charIndex = 0;
-  function typeNextChar() {
-    if (charIndex < command.text.length) {
-      // Add next character
-      textSpan.textContent += command.text.charAt(charIndex);
-      charIndex++;
-      
-      // Balanced typing speed - not too fast, not too slow
-      const delay = command.isCommand ? 25 + Math.random() * 15 : 8 + Math.random() * 5;
-      setTimeout(typeNextChar, delay);
-    } else {
-      // Typing complete for this command
-      cursorSpan.remove();
-      callback();
+    const promptSpan = document.createElement('span');
+    promptSpan.className = 'prompt';
+    promptSpan.textContent = '$ ';
+    lineElement.appendChild(promptSpan);
+    
+    // Add text span that will be typed for commands
+    const textSpan = document.createElement('span');
+    textSpan.className = 'command';
+    lineElement.appendChild(textSpan);
+    
+    // Add cursor span for commands
+    const cursorSpan = document.createElement('span');
+    cursorSpan.className = 'cursor';
+    cursorSpan.textContent = '';
+    lineElement.appendChild(cursorSpan);
+    
+    // Add line to terminal
+    terminalContent.appendChild(lineElement);
+    
+    // Force a reflow to ensure the element is rendered immediately
+    void lineElement.offsetHeight;
+    
+    // Type characters one by one for commands (fast)
+    let charIndex = 0;
+    function typeNextChar() {
+      if (charIndex < command.text.length) {
+        // Add next character
+        textSpan.textContent += command.text.charAt(charIndex);
+        charIndex++;
+        
+        // Slightly slower, more natural typing speed
+        setTimeout(typeNextChar, 15 + Math.random() * 10);
+      } else {
+        // Typing complete for this command
+        cursorSpan.remove();
+        
+        // Add a slightly longer pause after command is typed
+        setTimeout(callback, 150);
+      }
     }
+    
+    // Start typing
+    typeNextChar();
+  } else {
+    // For outputs, show complete text with a cloud-like floating effect
+    lineElement.style.opacity = '0';
+    lineElement.style.transform = 'translateY(12px)';
+    
+    // Add output prompt (>)
+    const outputPromptSpan = document.createElement('span');
+    outputPromptSpan.className = 'output-prompt';
+    outputPromptSpan.textContent = '> ';
+    outputPromptSpan.style.color = '#888'; // Gray color for prompt
+    lineElement.appendChild(outputPromptSpan);
+    
+    // Add text span with complete output text in gray
+    const textSpan = document.createElement('span');
+    textSpan.className = 'output-text';
+    textSpan.textContent = command.text;
+    textSpan.style.color = '#aaa'; // Light gray for output text
+    lineElement.appendChild(textSpan);
+    
+    // Add line to terminal
+    terminalContent.appendChild(lineElement);
+    
+    // Force a reflow to ensure the element is rendered immediately
+    void lineElement.offsetHeight;
+    
+    // Add hardware acceleration for smoother animation
+    lineElement.style.willChange = 'opacity, transform';
+    
+    // Smoothly fade in the output with enhanced cloud-like floating effect
+    requestAnimationFrame(() => {
+      // Use a more pronounced easing curve for cloud-like motion
+      lineElement.style.transition = 'opacity 300ms cubic-bezier(0.34, 1.56, 0.64, 1), transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+      lineElement.style.opacity = '1';
+      lineElement.style.transform = 'translateY(0)';
+      
+      // Call the callback after the transition with a longer delay for smoother flow
+      setTimeout(() => {
+        // Clean up hardware acceleration
+        lineElement.style.willChange = 'auto';
+        
+        // Call the callback to process next command
+        callback();
+      }, 250);
+    });
   }
-  
-  // Start typing
-  typeNextChar();
 }
 
 // Add blinking cursor style
@@ -193,33 +270,17 @@ function transitionToHero() {
     terminal.style.transform = 'translateY(-20px)';
   }
   
-  // After terminal fades out, show welcome message or hero (faster)
+  // After terminal fades out, show hero with a slight delay
   setTimeout(() => {
-    // Show welcome message if it exists
+    // Skip welcome message and go directly to hero
     if (etherealWelcome) {
-      // Show welcome message
-      etherealWelcome.style.display = 'flex';
-      etherealWelcome.style.opacity = '0';
-      
-      // Fade in welcome message (faster)
-      setTimeout(() => {
-        etherealWelcome.style.transition = 'opacity 400ms ease-out';
-        etherealWelcome.style.opacity = '1';
-        
-        // Show welcome message for a moment, then fade out (faster)
-        setTimeout(() => {
-          etherealWelcome.style.transition = 'opacity 400ms ease-out';
-          etherealWelcome.style.opacity = '0';
-          
-          // After welcome fades out, show hero (faster)
-          setTimeout(showHero, 400);
-        }, 800);
-      }, 10);
-    } else {
-      // No welcome message, go directly to hero
-      showHero();
+      // Hide welcome message completely
+      etherealWelcome.style.display = 'none';
     }
-  }, 450);
+    
+    // Show hero with a slight pause for better transition feel
+    setTimeout(showHero, 180);
+  }, 150);
   
   // Function to show hero section
   function showHero() {
@@ -247,27 +308,48 @@ function transitionToHero() {
       // Ensure the document is scrolled to the top
       window.scrollTo(0, 0);
       
-      // Fade in hero with a slight delay to ensure DOM updates
+      // Add hardware acceleration for smoother animation
+      hero.style.willChange = 'opacity, transform';
+      hero.style.transform = 'translateY(15px)';
+      hero.style.opacity = '0';
+      
+      // Force a reflow to ensure styles are applied immediately
+      void hero.offsetHeight;
+      
+      // Fade in hero with enhanced cloud-like floating effect (slightly slower)
       setTimeout(() => {
-        hero.style.transition = 'opacity 500ms ease-out';
+        // Use the same bouncy cubic-bezier curve with slightly longer duration
+        hero.style.transition = 'opacity 650ms cubic-bezier(0.34, 1.56, 0.64, 1), transform 650ms cubic-bezier(0.34, 1.56, 0.64, 1)';
         hero.style.opacity = '1';
+        hero.style.transform = 'translateY(0)';
         
-        // Animate hero elements after hero fades in
-        setTimeout(animateHeroElements, 300);
+        // Animate hero elements with slight delay
+        setTimeout(animateHeroElements, 250);
         
-        // Allow about section to fade in normally after hero is shown
+        // Allow about section to fade in with enhanced cloud-like effect (faster)
         if (about) {
+          about.style.willChange = 'opacity, transform';
+          about.style.transform = 'translateY(20px)';
+          about.style.opacity = '0';
+          
           setTimeout(() => {
-            about.style.transition = 'opacity 600ms ease-out';
+            about.style.transition = 'opacity 700ms cubic-bezier(0.34, 1.56, 0.64, 1), transform 700ms cubic-bezier(0.34, 1.56, 0.64, 1)';
             about.style.opacity = '1';
-          }, 1000);
+            about.style.transform = 'translateY(0)';
+            
+            // Clean up hardware acceleration after animations complete
+            setTimeout(() => {
+              hero.style.willChange = 'auto';
+              about.style.willChange = 'auto';
+            }, 800);
+          }, 600);
         }
-      }, 50);
+      }, 100);
     }
   }
 }
 
-// Animate hero elements with staggered timing
+// Animate hero elements with cloud-like floating effect
 function animateHeroElements() {
   // Get hero elements
   const changingWord = document.getElementById('changing-word');
@@ -275,13 +357,15 @@ function animateHeroElements() {
   const ctaButton = document.querySelector('.cta-button');
   const scrollIndicator = document.querySelector('.scroll-indicator');
   
-  // Improved handling for the changing word to prevent glitches
+  // Simple fade-in for the changing word to avoid bouncing issues
   if (changingWord) {
-    // Store the initial text but don't modify it
-    // Let word-cycle.js handle all text changes
-    const initialText = changingWord.textContent;
+    // Just fade in without transform to avoid conflict with word-cycle.js
+    changingWord.style.opacity = '0';
     
-    // Just ensure it's visible with a transition
+    // Force a reflow
+    void changingWord.offsetHeight;
+    
+    // Simple fade-in without bounce
     changingWord.style.transition = 'opacity 600ms ease-out';
     changingWord.style.opacity = '1';
     
@@ -292,22 +376,31 @@ function animateHeroElements() {
   // Create array of remaining elements to animate in sequence
   const elements = [tagline, ctaButton, scrollIndicator];
   
-  // Staggered animation for other elements
-  let delay = 200;
+  // Faster staggered animation with cloud-like effect
+  let delay = 150;
   const staggerDelay = 120;
   
-  // Animate each element
+  // Animate each element with cloud-like floating (faster)
   elements.forEach(element => {
     if (element) {
-      // Set initial state
+      // Add hardware acceleration
+      element.style.willChange = 'opacity, transform';
+      
+      // Set initial state with moderate offset for floating effect
       element.style.opacity = '0';
       element.style.transform = 'translateY(15px)';
       
-      // Animate with delay
+      // Force a reflow
+      void element.offsetHeight;
+      
+      // Animate with cloud-like floating effect (faster)
       setTimeout(() => {
-        element.style.transition = 'opacity 400ms ease-out, transform 400ms ease-out';
+        element.style.transition = 'opacity 450ms cubic-bezier(0.34, 1.56, 0.64, 1), transform 450ms cubic-bezier(0.34, 1.56, 0.64, 1)';
         element.style.opacity = '1';
         element.style.transform = 'translateY(0)';
+        
+        // Clean up hardware acceleration after animation
+        setTimeout(() => element.style.willChange = 'auto', 500);
       }, delay);
       
       delay += staggerDelay;
