@@ -3,13 +3,26 @@
  * Skip loading screen and show hero section immediately
  */
 
-// Simplified preload function - no cursor image loading
+// Enhanced preload function that properly prepares the browser
 function preloadResources() {
   return new Promise((resolve) => {
-    // Small delay to ensure browser is ready
-    setTimeout(() => {
-      resolve();
-    }, 50);
+    // Force layout calculations to happen before animation starts
+    // This helps prevent layout thrashing during animation
+    const terminalContent = document.querySelector('.terminal-content');
+    const terminal = document.querySelector('.ethereal-terminal');
+    
+    if (terminal && terminalContent) {
+      // Apply hardware acceleration hints
+      terminal.style.willChange = 'opacity, transform';
+      terminal.style.transform = 'translateZ(0)';
+      
+      // Force layout calculation
+      void terminal.offsetHeight;
+      void terminalContent.offsetHeight;
+    }
+    
+    // Resolve immediately - we'll use requestIdleCallback later
+    resolve();
   });
 }
 
@@ -63,13 +76,20 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     // Preload resources first, then start animation
     preloadResources().then(() => {
-      // Use double requestAnimationFrame to ensure browser is ready
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // Start animation immediately without delay
-          startTerminalAnimation();
-        });
-      });
+      // Use requestIdleCallback to ensure browser is fully idle before starting animation
+      // This helps prevent animation freezes and delays
+      const startAnimation = () => {
+        // Start animation without delay once browser is idle
+        startTerminalAnimation();
+      };
+      
+      // Use requestIdleCallback with fallback for older browsers
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(startAnimation, { timeout: 1000 });
+      } else {
+        // Fallback to setTimeout for browsers that don't support requestIdleCallback
+        setTimeout(startAnimation, 50);
+      }
     });
   }
 });
