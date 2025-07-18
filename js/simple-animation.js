@@ -366,12 +366,22 @@ function startTerminalAnimation() {
   }
   
   // Force a paint before starting the animation to fix Chrome fullscreen lag
+  // Create and append a dummy element to trigger a first paint in Chrome
+  const dummyElement = document.createElement('div');
+  dummyElement.style.height = '1px';
+  dummyElement.style.position = 'absolute';
+  dummyElement.style.opacity = '0';
+  terminal.appendChild(dummyElement);
+  
   // Explicitly set display to block and force a layout recalculation
   terminal.style.display = 'block';
   
   // Force a reflow/repaint by accessing a layout property
   // This will make Chrome commit the first frame before animation starts
   void terminal.getBoundingClientRect();
+  
+  // Remove the dummy element after forcing the paint
+  setTimeout(() => terminal.removeChild(dummyElement), 0);
   
   // Use double requestAnimationFrame to ensure the browser has committed the first frame
   requestAnimationFrame(() => {
