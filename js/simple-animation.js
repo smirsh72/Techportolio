@@ -3,6 +3,29 @@
  * Skip loading screen and show hero section immediately
  */
 
+// Immediately execute code to hide welcome elements before DOM loads
+(function() {
+  // Create and inject a style element with high priority rules
+  const style = document.createElement('style');
+  style.textContent = `
+    .ethereal-welcome, .welcome-symbol, .welcome-message {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      position: absolute !important;
+      z-index: -999 !important;
+    }
+    .ethereal-terminal {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      z-index: 999 !important;
+    }
+  `;
+  // Insert at the beginning of head for highest priority
+  document.head.insertBefore(style, document.head.firstChild);
+})();
+
 // Enhanced preload function that properly prepares the browser
 function preloadResources() {
   return new Promise((resolve) => {
@@ -58,20 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
     about.style.opacity = '0';
   }
   
-  // Check if we should show loading animation or go directly to hero
-  const skipLoading = false; // Set to true to skip loading animation
-  
-  if (skipLoading) {
+  // Check if URL has a hash to skip loading screen
+  if (window.location.hash) {
     // Hide loading screen
     if (loadingScreen) {
       loadingScreen.style.display = 'none';
     }
     
-    // Show hero immediately
+    // Show hero section
     if (hero) {
-      // Force scroll to top
-      window.scrollTo(0, 0);
-      
       // Show hero
       hero.style.display = 'flex';
       hero.style.opacity = '1';
@@ -82,22 +100,17 @@ document.addEventListener('DOMContentLoaded', () => {
       animateHeroElements();
     }
   } else {
+    // Ensure terminal is visible before anything else
+    if (terminal) {
+      terminal.style.display = 'block';
+      terminal.style.visibility = 'visible';
+      terminal.style.opacity = '1';
+    }
+    
     // Preload resources first, then start animation
     preloadResources().then(() => {
-      // Use requestIdleCallback to ensure browser is fully idle before starting animation
-      // This helps prevent animation freezes and delays
-      const startAnimation = () => {
-        // Start animation without delay once browser is idle
-        startTerminalAnimation();
-      };
-      
-      // Use requestIdleCallback with fallback for older browsers
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(startAnimation, { timeout: 1000 });
-      } else {
-        // Fallback to setTimeout for browsers that don't support requestIdleCallback
-        setTimeout(startAnimation, 50);
-      }
+      // Start animation immediately without waiting
+      startTerminalAnimation();
     });
   }
 });
