@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Add welcome message
   function addWelcomeMessage() {
     setTimeout(() => {
-      addMessage("Hi there! I'm Shan's AI assistant. Ask me anything about his experience as a Cloud Architect, AI Engineer, and Technical Product Manager.");
+      addMessage("Hi there! I'm Shan's AI assistant. Ask me anything about Shan!");
     }, 800);
   }
   
