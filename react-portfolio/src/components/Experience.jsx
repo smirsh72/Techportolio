@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
@@ -21,22 +21,62 @@ const experiences = [
   },
 ];
 
-function ExperienceCard({ experience, index, reducedMotion }) {
-  const cardRef = useRef(null);
-  const isInView = useInView(cardRef, { once: true, margin: '-50px' });
+// Check if mobile on initial render
+const getInitialMobile = () => {
+  if (typeof window !== 'undefined') {
+    return window.innerWidth <= 768;
+  }
+  return false;
+};
 
+function ExperienceCard({ experience, index, reducedMotion, isMobile }) {
+  const cardRef = useRef(null);
+  const isInView = useInView(cardRef, { once: true, margin: isMobile ? '0px' : '-50px' });
+
+  // Mobile: show immediately with simple fade
+  if (isMobile) {
+    return (
+      <motion.div
+        ref={cardRef}
+        className="experience-card"
+        initial={{ opacity: 0 }}
+        animate={isInView ? { opacity: 1 } : {}}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="experience-card-content">
+          <div className="company-logo-wrapper">
+            <div className="company-logo-container">
+              <img src={experience.logo} alt={`${experience.company} logo`} className="company-logo" />
+            </div>
+          </div>
+          <div className="experience-details">
+            <div className="experience-header">
+              <h3 className="experience-title">
+                <span className="gradient-role">{experience.title}</span>
+              </h3>
+              <p className="experience-company">@ {experience.company}</p>
+              <p className="experience-date">{experience.date}</p>
+            </div>
+            <p className="experience-paragraph">{experience.description}</p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Desktop: full animations
   return (
     <motion.div
       ref={cardRef}
       className="experience-card"
-      initial={{ opacity: 0, y: reducedMotion ? 0 : 40 }}
+      initial={{ opacity: 0, y: 40 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{
-        delay: reducedMotion ? 0 : index * 0.15,
+        delay: index * 0.15,
         duration: reducedMotion ? 0.1 : 0.6,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
-      whileHover={reducedMotion ? {} : {
+      whileHover={{
         y: -5,
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
         transition: { duration: 0.3 },
@@ -45,29 +85,18 @@ function ExperienceCard({ experience, index, reducedMotion }) {
       <div className="experience-card-content">
         <div className="company-logo-wrapper">
           <div className="company-logo-container">
-            <img
-              src={experience.logo}
-              alt={`${experience.company} logo`}
-              className="company-logo"
-            />
+            <img src={experience.logo} alt={`${experience.company} logo`} className="company-logo" />
           </div>
         </div>
-
         <div className="experience-details">
           <div className="experience-header">
             <h3 className="experience-title">
               <span className="gradient-role">{experience.title}</span>
             </h3>
-            <p className="experience-company">
-              @ {experience.company}
-            </p>
-            <p className="experience-date">
-              {experience.date}
-            </p>
+            <p className="experience-company">@ {experience.company}</p>
+            <p className="experience-date">{experience.date}</p>
           </div>
-          <p className="experience-paragraph">
-            {experience.description}
-          </p>
+          <p className="experience-paragraph">{experience.description}</p>
         </div>
       </div>
     </motion.div>
@@ -77,16 +106,23 @@ function ExperienceCard({ experience, index, reducedMotion }) {
 export default function Experience() {
   const reducedMotion = useReducedMotion();
   const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
+  const [isMobile, setIsMobile] = useState(getInitialMobile);
+  const isInView = useInView(sectionRef, { once: true, margin: isMobile ? '0px' : '-100px' });
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <section id="experience" className="modern-section experience-section" ref={sectionRef}>
       <div className="container">
         <motion.h2
           className="section-subtitle text-center"
-          initial={{ opacity: 0, y: reducedMotion ? 0 : 20 }}
+          initial={{ opacity: 0, y: isMobile ? 0 : 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: reducedMotion ? 0.1 : 0.6 }}
+          transition={{ duration: isMobile ? 0.3 : 0.6 }}
         >
           Experience
         </motion.h2>
@@ -98,6 +134,7 @@ export default function Experience() {
               experience={exp}
               index={index}
               reducedMotion={reducedMotion}
+              isMobile={isMobile}
             />
           ))}
         </div>

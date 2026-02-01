@@ -2,19 +2,19 @@ redirectsOrigin = "config"
 plugins = []
 headers = []
 
-[dev]
-framework = "html"
-
 [functions]
 
 [functions."*"]
 
 [build]
-publish = "/Users/shanirshad/CascadeProjects/windsurf-project/terminal-portfolio"
+publish = "/Users/shanirshad/CascadeProjects/windsurf-project/terminal-portfolio/react-portfolio/dist"
 publishOrigin = "config"
+commandOrigin = "config"
+command = "npm install && npm run build"
+base = "/Users/shanirshad/CascadeProjects/windsurf-project/terminal-portfolio/react-portfolio"
 
 [build.environment]
-NODE_VERSION = "16"
+NODE_VERSION = "20"
 
 [build.processing]
 

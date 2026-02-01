@@ -36,3 +36,6 @@ bower_components/
 
 # Server directory (has its own Git repo)
 server/
+
+# Local Netlify folder
+.netlify

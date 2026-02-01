@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
@@ -25,23 +25,58 @@ const certifications = [
   },
 ];
 
-function CertificationCard({ cert, index, reducedMotion }) {
+// Check if mobile on initial render
+const getInitialMobile = () => {
+  if (typeof window !== 'undefined') {
+    return window.innerWidth <= 768;
+  }
+  return false;
+};
+
+function CertificationCard({ cert, index, reducedMotion, isMobile }) {
   const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef(null);
-  const isInView = useInView(cardRef, { once: true, margin: '-50px' });
+  const isInView = useInView(cardRef, { once: true, margin: isMobile ? '0px' : '-50px' });
 
+  // Mobile: simple fade
+  if (isMobile) {
+    return (
+      <motion.div
+        ref={cardRef}
+        className="certification-card"
+        initial={{ opacity: 0 }}
+        animate={isInView ? { opacity: 1 } : {}}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="certification-badge-container">
+          <img src={cert.badge} alt={cert.title} className="certification-badge" />
+        </div>
+        <div className="certification-details">
+          <h3 className="certification-title">
+            Microsoft <span className="gradient-role">{cert.hoverTitle}</span>
+          </h3>
+          <p className="certification-description">{cert.description}</p>
+          <a href={cert.link} target="_blank" rel="noopener noreferrer" className="certification-link">
+            <i className="fas fa-external-link-alt" /> View Certification
+          </a>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Desktop: full animations
   return (
     <motion.div
       ref={cardRef}
       className="certification-card"
-      initial={{ opacity: 0, y: reducedMotion ? 0 : 40 }}
+      initial={{ opacity: 0, y: 40 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{
-        delay: reducedMotion ? 0 : index * 0.15,
+        delay: index * 0.15,
         duration: reducedMotion ? 0.1 : 0.6,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
-      whileHover={reducedMotion ? {} : {
+      whileHover={{
         y: -5,
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
         transition: { duration: 0.3 },
@@ -51,30 +86,24 @@ function CertificationCard({ cert, index, reducedMotion }) {
         className="certification-badge-container"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        whileHover={reducedMotion ? {} : { scale: 1.05 }}
+        whileHover={{ scale: 1.05 }}
       >
         <motion.img
           src={cert.badge}
           alt={cert.title}
           className="certification-badge"
-          initial={{ opacity: 0, scale: reducedMotion ? 1 : 0.8 }}
+          initial={{ opacity: 0, scale: 0.8 }}
           animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{
-            delay: reducedMotion ? 0 : index * 0.15 + 0.2,
-            duration: 0.5,
-          }}
+          transition={{ delay: index * 0.15 + 0.2, duration: 0.5 }}
         />
         <AnimatePresence>
-          {isHovered && !reducedMotion && (
+          {isHovered && (
             <motion.div
               className="certification-hover-info"
               initial={{ opacity: 0, y: '100%' }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: '100%' }}
-              transition={{
-                duration: 0.4,
-                ease: [0.175, 0.885, 0.32, 1.275],
-              }}
+              transition={{ duration: 0.4, ease: [0.175, 0.885, 0.32, 1.275] }}
             >
               <h4>{cert.hoverTitle}</h4>
               <p>{cert.hoverDescription}</p>
@@ -87,12 +116,9 @@ function CertificationCard({ cert, index, reducedMotion }) {
       <div className="certification-details">
         <motion.h3
           className="certification-title"
-          initial={{ opacity: 0, x: reducedMotion ? 0 : -20 }}
+          initial={{ opacity: 0, x: -20 }}
           animate={isInView ? { opacity: 1, x: 0 } : {}}
-          transition={{
-            delay: reducedMotion ? 0 : index * 0.15 + 0.3,
-            duration: 0.5,
-          }}
+          transition={{ delay: index * 0.15 + 0.3, duration: 0.5 }}
         >
           Microsoft <span className="gradient-role">{cert.hoverTitle}</span>
         </motion.h3>
@@ -100,10 +126,7 @@ function CertificationCard({ cert, index, reducedMotion }) {
           className="certification-description"
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
-          transition={{
-            delay: reducedMotion ? 0 : index * 0.15 + 0.4,
-            duration: 0.4,
-          }}
+          transition={{ delay: index * 0.15 + 0.4, duration: 0.4 }}
         >
           {cert.description}
         </motion.p>
@@ -114,14 +137,8 @@ function CertificationCard({ cert, index, reducedMotion }) {
           className="certification-link"
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
-          transition={{
-            delay: reducedMotion ? 0 : index * 0.15 + 0.5,
-            duration: 0.4,
-          }}
-          whileHover={reducedMotion ? {} : {
-            x: 5,
-            color: '#be185d',
-          }}
+          transition={{ delay: index * 0.15 + 0.5, duration: 0.4 }}
+          whileHover={{ x: 5, color: '#be185d' }}
         >
           <i className="fas fa-external-link-alt" /> View Certification
         </motion.a>
@@ -133,16 +150,23 @@ function CertificationCard({ cert, index, reducedMotion }) {
 export default function Certifications() {
   const reducedMotion = useReducedMotion();
   const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
+  const [isMobile, setIsMobile] = useState(getInitialMobile);
+  const isInView = useInView(sectionRef, { once: true, margin: isMobile ? '0px' : '-100px' });
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <section id="certifications" className="modern-section certifications-section" ref={sectionRef}>
       <div className="container">
         <motion.h2
           className="section-subtitle text-center"
-          initial={{ opacity: 0, y: reducedMotion ? 0 : 20 }}
+          initial={{ opacity: 0, y: isMobile ? 0 : 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: reducedMotion ? 0.1 : 0.6 }}
+          transition={{ duration: isMobile ? 0.3 : 0.6 }}
         >
           Certifications
         </motion.h2>
@@ -154,6 +178,7 @@ export default function Certifications() {
               cert={cert}
               index={index}
               reducedMotion={reducedMotion}
+              isMobile={isMobile}
             />
           ))}
         </div>
