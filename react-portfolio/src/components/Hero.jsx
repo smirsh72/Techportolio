@@ -96,7 +96,7 @@ function EtherealHorizon({ reducedMotion }) {
 }
 
 // Word carousel component
-function WordCarousel({ reducedMotion }) {
+function WordCarousel({ reducedMotion, isMobile }) {
   const words = useMemo(() => [
     'Shan Irshad',
     'An Innovator',
@@ -119,12 +119,13 @@ function WordCarousel({ reducedMotion }) {
     return () => clearTimeout(timer);
   }, [words.length]);
 
+  // Simpler animations on mobile to prevent glitches
   const slideVariants = {
     enter: {
-      y: reducedMotion ? 0 : 40,
+      y: reducedMotion || isMobile ? 0 : 40,
       opacity: 0,
-      rotateX: reducedMotion ? 0 : -45,
-      filter: 'blur(4px)',
+      rotateX: reducedMotion || isMobile ? 0 : -45,
+      filter: isMobile ? 'none' : 'blur(4px)',
     },
     center: {
       y: 0,
@@ -133,10 +134,10 @@ function WordCarousel({ reducedMotion }) {
       filter: 'blur(0px)',
     },
     exit: {
-      y: reducedMotion ? 0 : -20,
+      y: reducedMotion || isMobile ? 0 : -20,
       opacity: 0,
-      rotateX: reducedMotion ? 0 : 45,
-      filter: 'blur(4px)',
+      rotateX: reducedMotion || isMobile ? 0 : 45,
+      filter: isMobile ? 'none' : 'blur(4px)',
     },
   };
 
@@ -145,13 +146,13 @@ function WordCarousel({ reducedMotion }) {
       <AnimatePresence mode="wait">
         <motion.span
           key={currentIndex}
-          className="gradient-text glow-effect"
+          className={`gradient-text ${isMobile ? '' : 'glow-effect'}`}
           variants={slideVariants}
           initial="enter"
           animate="center"
           exit="exit"
           transition={{
-            duration: reducedMotion ? 0.2 : 0.8,
+            duration: reducedMotion || isMobile ? 0.3 : 0.8,
             ease: [0.25, 0.46, 0.45, 0.94],
           }}
         >
@@ -165,11 +166,19 @@ function WordCarousel({ reducedMotion }) {
 export default function Hero() {
   const reducedMotion = useReducedMotion();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoaded(true), 100);
-    return () => clearTimeout(timer);
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), isMobile ? 50 : 100);
+    return () => clearTimeout(timer);
+  }, [isMobile]);
 
   const scrollToNext = () => {
     const aboutSection = document.getElementById('about');
@@ -183,19 +192,19 @@ export default function Hero() {
     visible: {
       opacity: 1,
       transition: {
-        duration: reducedMotion ? 0.1 : 0.6,
-        staggerChildren: reducedMotion ? 0 : 0.15,
+        duration: reducedMotion || isMobile ? 0.2 : 0.6,
+        staggerChildren: reducedMotion || isMobile ? 0.05 : 0.15,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: reducedMotion ? 0 : 30 },
+    hidden: { opacity: 0, y: reducedMotion || isMobile ? 0 : 30 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: reducedMotion ? 0.1 : 0.6,
+        duration: reducedMotion || isMobile ? 0.2 : 0.6,
         ease: [0.25, 0.46, 0.45, 0.94],
       },
     },
@@ -207,7 +216,7 @@ export default function Hero() {
       className="hero"
       initial={{ opacity: 0 }}
       animate={{ opacity: isLoaded ? 1 : 0 }}
-      transition={{ duration: reducedMotion ? 0.1 : 0.5 }}
+      transition={{ duration: reducedMotion || isMobile ? 0.2 : 0.5 }}
     >
       {/* Ethereal Horizon Background */}
       <EtherealHorizon reducedMotion={reducedMotion} />
@@ -225,24 +234,24 @@ export default function Hero() {
               <motion.div className="greeting-line" variants={itemVariants}>
                 <motion.span
                   className="static-text hi"
-                  initial={{ opacity: 0, x: reducedMotion ? 0 : -20 }}
+                  initial={{ opacity: 0, x: reducedMotion || isMobile ? 0 : -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: reducedMotion ? 0 : 0.2, duration: 0.5 }}
+                  transition={{ delay: reducedMotion || isMobile ? 0 : 0.2, duration: isMobile ? 0.2 : 0.5 }}
                 >
                   Hi,
                 </motion.span>
                 <motion.span
                   className="static-text im"
-                  initial={{ opacity: 0, x: reducedMotion ? 0 : -20 }}
+                  initial={{ opacity: 0, x: reducedMotion || isMobile ? 0 : -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: reducedMotion ? 0 : 0.4, duration: 0.5 }}
+                  transition={{ delay: reducedMotion || isMobile ? 0 : 0.4, duration: isMobile ? 0.2 : 0.5 }}
                 >
                   I'm
                 </motion.span>
               </motion.div>
 
               <motion.div variants={itemVariants}>
-                <WordCarousel reducedMotion={reducedMotion} />
+                <WordCarousel reducedMotion={reducedMotion} isMobile={isMobile} />
               </motion.div>
             </h1>
           </div>
@@ -255,8 +264,8 @@ export default function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.6 }}
         transition={{
-          delay: reducedMotion ? 0 : 2,
-          duration: reducedMotion ? 0.1 : 0.6,
+          delay: reducedMotion || isMobile ? 0.5 : 2,
+          duration: reducedMotion || isMobile ? 0.2 : 0.6,
         }}
         onClick={scrollToNext}
         whileHover={{ opacity: 1 }}
@@ -264,7 +273,7 @@ export default function Hero() {
       >
         <motion.div
           className="scroll-arrow-wrapper"
-          animate={reducedMotion ? {} : {
+          animate={reducedMotion || isMobile ? {} : {
             y: [0, 6, 0],
           }}
           transition={{

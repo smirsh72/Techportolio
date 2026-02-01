@@ -194,26 +194,36 @@ function ExploringTag({ children, delay, reducedMotion }) {
 export default function About() {
   const reducedMotion = useReducedMotion();
   const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Trigger earlier on mobile for better UX
+  const isInView = useInView(sectionRef, { once: true, margin: isMobile ? '0px' : '-100px' });
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        duration: reducedMotion ? 0.1 : 0.6,
-        staggerChildren: reducedMotion ? 0 : 0.1,
+        duration: reducedMotion || isMobile ? 0.3 : 0.6,
+        staggerChildren: reducedMotion || isMobile ? 0.05 : 0.1,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: reducedMotion ? 0 : 30 },
+    hidden: { opacity: 0, y: reducedMotion || isMobile ? 0 : 30 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: reducedMotion ? 0.1 : 0.6,
+        duration: reducedMotion || isMobile ? 0.3 : 0.6,
         ease: [0.25, 0.46, 0.45, 0.94],
       },
     },

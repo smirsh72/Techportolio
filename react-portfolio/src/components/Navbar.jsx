@@ -7,11 +7,35 @@ export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const reducedMotion = useReducedMotion();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      const currentScrollY = window.scrollY;
+
+      setIsScrolled(currentScrollY > 50);
+
+      // Hide navbar on scroll down, show on scroll up (mobile only)
+      if (isMobile) {
+        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+          setIsHidden(true);
+        } else {
+          setIsHidden(false);
+        }
+      }
+
+      setLastScrollY(currentScrollY);
 
       // Determine active section
       const sections = ['hero', 'about', 'experience', 'certifications'];
@@ -26,7 +50,7 @@ export default function Navbar() {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [lastScrollY, isMobile]);
 
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
@@ -43,11 +67,11 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      className={`navbar ${isScrolled ? 'sticky-nav' : ''}`}
+      className={`navbar ${isScrolled ? 'sticky-nav' : ''} ${isHidden ? 'navbar-hidden' : ''}`}
       initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+      animate={{ y: isHidden ? -100 : 0, opacity: isHidden ? 0 : 1 }}
       transition={{
-        duration: reducedMotion ? 0.1 : 0.6,
+        duration: reducedMotion ? 0.1 : 0.3,
         ease: [0.25, 0.46, 0.45, 0.94]
       }}
     >

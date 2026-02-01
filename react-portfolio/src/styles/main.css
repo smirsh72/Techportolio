@@ -678,23 +678,11 @@ body {
 
 /* Inline gradient text (About section highlights) */
 .gradient-text.highlight-text {
-  font-size: 1.125rem;
+  font-size: inherit;
   font-weight: 600;
   line-height: inherit;
   padding: 0;
   animation: none;
-}
-
-@media (max-width: 768px) {
-  .gradient-text.highlight-text {
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .gradient-text.highlight-text {
-    font-size: 0.95rem;
-  }
 }
 
 /* Exploring Section */
