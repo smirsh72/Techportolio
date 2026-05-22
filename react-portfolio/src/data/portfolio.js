@@ -52,6 +52,13 @@ export const products = [
     logo: '/images/prismo-logo.png',
   },
   {
+    id: 'prismodev',
+    title: 'PrismoDev',
+    description: 'local cli that finds and reduces token waste in claude code, codex, and cursor workflows.',
+    link: 'https://github.com/shanirsh/prismodev',
+    logo: '/images/prismo-logo.png',
+  },
+  {
     id: 'ghosted',
     title: 'Ghosted',
     description: 'deploy cloud infrastructure with plain english.',
