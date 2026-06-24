@@ -18,6 +18,14 @@ export const socialLinks = [
 
 export const experiences = [
   {
+    id: 'capitalone',
+    date: 'current',
+    company: 'Capital One',
+    title: 'product manager',
+    logo: '/images/capitalone-logo.png',
+    description: 'product development program.',
+  },
+  {
     id: 'lvlup',
     date: 'current',
     company: 'LvlUp VC',
