@@ -31,7 +31,7 @@ export const experiences = [
     company: 'LvlUp VC',
     title: 'venture',
     logo: '/images/lvlup_vc_logo.jpeg',
-    description: "selected for LvlUp VC's residency program, partnering with AI founders on thesis-driven strategy, category creation, and scaling.",
+    description: "selected for lvlup vc's residency program, partnering with ai founders on thesis-driven strategy, category creation, and scaling.",
   },
   {
     id: 'mastercard',
