@@ -47,16 +47,9 @@ export const products = [
   {
     id: 'prismo',
     title: 'Prismo',
-    description: 'ai routing layer for cost, reliability & governance.',
+    description: 'control plane for ai coding agents — measure waste, enforce policies, and verify tasks across repos.',
     link: 'https://getprismo.dev',
     logo: '/images/prismo-logo.png',
-  },
-  {
-    id: 'prismodev',
-    title: 'PrismoDev',
-    description: 'local cli that finds and reduces token waste in claude code, codex, and cursor workflows.',
-    link: 'https://github.com/shanirsh/prismodev',
-    logo: '/images/prismodev-logo.png',
   },
   {
     id: 'ghosted',
