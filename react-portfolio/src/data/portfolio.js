@@ -49,6 +49,14 @@ export const experiences = [
     logo: '/images/nutrify-logo.jpeg',
     description: 'shipped llm and computer vision features for an ai nutrition platform.',
   },
+  {
+    id: 'sirius',
+    date: '2024',
+    company: 'Sirius Development',
+    title: 'product engineer',
+    logo: '/images/sirius-logo.png',
+    description: 'built ci/cd pipelines with azure devops and docker, automated cloud infrastructure with arm templates, and designed network security across azure.',
+  },
 ];
 
 export const products = [
