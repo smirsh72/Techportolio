@@ -55,7 +55,7 @@ export const experiences = [
     company: 'Sirius Development',
     title: 'product engineer',
     logo: '/images/sirius-logo.png',
-    description: 'built ci/cd pipelines with azure devops and docker, automated cloud infrastructure with arm templates, and designed network security across azure.',
+    description: 'ci/cd automation and cloud infrastructure on azure.',
   },
 ];
 
