@@ -34,7 +34,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden;
-  background: #050505;
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
   line-height: 1.6;
@@ -75,36 +75,13 @@ a {
   background-image: url('/images/bg-halftone.jpeg');
   background-position: center;
   background-size: cover;
-  filter: grayscale(100%) contrast(1.35) brightness(1.1);
-  opacity: 0.05;
-}
-
-.modern-section::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.54), rgba(0, 0, 0, 0.9)),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.3), transparent 48%, rgba(0, 0, 0, 0.28));
+  filter: grayscale(100%) contrast(1.25) brightness(1.35);
+  opacity: 0.16;
 }
 
 .about-section {
   padding: 3rem 0 2.5rem;
   background: var(--bg);
-}
-
-.about-section::before {
-  background-position: center 36%;
-  filter: grayscale(100%) contrast(1.45) brightness(1.24);
-  opacity: 0.28;
-}
-
-.about-section::after {
-  background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.7) 42%, rgba(0, 0, 0, 0.36) 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.88) 100%);
 }
 
 .content-section {
