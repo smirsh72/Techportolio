@@ -53,7 +53,7 @@ export const experiences = [
     id: 'sirius',
     date: '2024',
     company: 'Sirius Development',
-    title: 'product engineer',
+    title: 'forward deployed engineer',
     logo: '/images/sirius-logo.png',
     description: 'ci/cd automation and cloud infrastructure on azure.',
   },
